@@ -24,21 +24,71 @@ if not api_key or not supabase_url or not supabase_key:
 client = genai.Client(api_key=api_key)
 supabase = create_client(supabase_url, supabase_key)
 
-# 3. Panel boczny (Ustawienia i Pokoje)
+# Inicjalizacja stanu sesji dla aktywnego pokoju
+if "current_room" not in st.session_state:
+  st.session_state.current_room = "Nowa rozmowa"
+
+# 3. Pobieranie listy unikalnych pokoi z bazy Supabase
+try:
+  rooms_res = supabase.table("messages").select("room_id").execute()
+  rooms_data = rooms_res.data or []
+  # Wyciągamy unikalne nazwy pokoi i sortujemy
+  existing_rooms = sorted(
+      list(
+          set(
+              m.get("room_id", "Nowa rozmowa")
+              for m in rooms_data
+              if isinstance(m, dict) and m.get("room_id")
+          )
+      )
+  )
+  if not existing_rooms:
+    existing_rooms = ["Nowa rozmowa"]
+except Exception:
+  existing_rooms = [st.session_state.current_room]
+
+# Zapewnienie, że aktualny pokój jest na liście
+if st.session_state.current_room not in existing_rooms:
+  existing_rooms.append(st.session_state.current_room)
+
+# 4. Panel boczny w stylu Gemini (Historia i Nowy Czat)
 with st.sidebar:
-  st.header("⚙️ Ustawienia sesji")
+  st.header("⚙️ Ustawienia")
   user_name = st.text_input("Twoje imię:", value="Użytkownik")
-  
+
   st.divider()
-  st.subheader("💬 Pokoje / Wątki")
-  # Możesz wpisać dowolną nazwę pokoju, żeby przełączyć się na inny wątek rozmowy!
-  room_name = st.text_input("Nazwa pokoju:", value="ogólny")
-  
-  st.divider()
-  if st.button("🔄 Odśwież czat"):
+
+  # Przycisk tworzenia nowego czatu (jak w Gemini)
+  if st.button("➕ Nowy czat", use_container_width=True):
+    # Generujemy prostą nazwę bazującą na liczbie rozmów lub timestampie
+    new_room_name = f"Rozmowa {len(existing_rooms) + 1}"
+    st.session_state.current_room = new_room_name
     st.rerun()
 
-# 4. Pobieranie historii wiadomości tylko dla wybranego pokoju
+  st.subheader("💬 Twoje rozmowy")
+
+  # Wybór pokoju za pomocą listy (radio)
+  selected_room = st.radio(
+      "Wybierz wątek:",
+      options=existing_rooms,
+      index=existing_rooms.index(st.session_state.current_room)
+      if st.session_state.current_room in existing_rooms
+      else 0,
+      label_visibility="collapsed",
+  )
+
+  # Jeśli użytkownik kliknął inny pokój na liście
+  if selected_room != st.session_state.current_room:
+    st.session_state.current_room = selected_room
+    st.rerun()
+
+  st.divider()
+  if st.button("🔄 Odśwież widok", use_container_width=True):
+    st.rerun()
+
+room_name = st.session_state.current_room
+
+# 5. Pobieranie historii wiadomości dla aktywnego pokoju
 try:
   response = (
       supabase.table("messages")
@@ -52,7 +102,8 @@ except Exception as e:
   st.error(f"Błąd pobierania wiadomości: {e}")
   messages = []
 
-# 5. Wyświetlanie historii czatu
+# 6. Wyświetlanie historii czatu
+st.markdown(f"### Aktualny pokój: `{room_name}`")
 for msg in messages:
   if not isinstance(msg, dict):
     continue
@@ -68,9 +119,9 @@ for msg in messages:
     with st.chat_message("user"):
       st.markdown(f"**{author}:** {content}")
 
-# 6. Obsługa nowej wiadomości
-if prompt := st.chat_input(f"Napisz coś w pokoju '{room_name}'..."):
-  # Zapisujemy wiadomość użytkownika z przypisaniem do aktualnego pokoju
+# 7. Obsługa nowej wiadomości
+if prompt := st.chat_input(f"Napisz coś do Gemini..."):
+  # Zapisujemy wiadomość użytkownika
   try:
     supabase.table("messages").insert({
         "author": user_name,
@@ -81,7 +132,7 @@ if prompt := st.chat_input(f"Napisz coś w pokoju '{room_name}'..."):
   except Exception as e:
     st.error(f"Błąd zapisu: {e}")
 
-  # 7. Pobieramy pełną historię dla Gemini w tym pokoju
+  # 8. Pobieramy pełną historię do Gemini dla tego pokoju
   try:
     fresh_res = (
         supabase.table("messages")
@@ -108,7 +159,7 @@ if prompt := st.chat_input(f"Napisz coś w pokoju '{room_name}'..."):
     if not contents:
       contents = [prompt]
 
-    # 8. Wywołanie modelu Gemini
+    # 9. Wywołanie modelu Gemini
     with st.chat_message("assistant", avatar="🤖"):
       with st.spinner("Gemini pisze..."):
         try:
@@ -119,7 +170,7 @@ if prompt := st.chat_input(f"Napisz coś w pokoju '{room_name}'..."):
           bot_response = ai_response.text
           st.markdown(bot_response)
 
-          # Zapisujemy odpowiedź bota w bazie dla tego pokoju
+          # Zapisujemy odpowiedź bota w bazie
           supabase.table("messages").insert({
               "author": "Gemini",
               "content": bot_response,

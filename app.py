@@ -76,9 +76,9 @@ if prompt := st.chat_input("Napisz coś do Gemini..."):
     with st.spinner("Gemini pisze..."):
       try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=contents,
-        )
+    model="gemini-3.8-flash",
+    contents=contents,
+)
 
         bot_response = response.text
         st.markdown(bot_response)

@@ -505,35 +505,71 @@ body, html {
     display: none !important;
 }
 
-/* --- Naprawa białych elementów w interfejsie --- */
+/* --- Profesjonalny, spójny design elementów interfejsu --- */
 
-/* 1. Przycisk "+ Nowa rozmowa" w sidebarze */
+/* 1. Przycisk "+ Nowa rozmowa" */
 #new-chat-btn {
-    background-color: #374151 !important;
-    color: var(--text-main) !important;
-    border: 1px solid var(--border-color) !important;
-    transition: background 0.2s;
+    background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1rem !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3) !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
 }
 #new-chat-btn:hover {
-    background-color: #4b5563 !important;
+    opacity: 0.9;
+    transform: translateY(-1px);
 }
 
-/* 2. Pole edycji nazwy pokoju w nagłówku (górny input) */
+/* 2. Górny input zmiany nazwy pokoju */
 .chat-header-right input[type="text"],
 #rename-input {
-    background-color: var(--bg-sidebar) !important;
-    color: var(--text-main) !important;
-    border: 1px solid var(--border-color) !important;
+    background-color: #1e1b4b !important;
+    color: #ffffff !important;
+    border: 1px solid #4338ca !important;
+    border-radius: 6px !important;
+    padding: 0.5rem 0.75rem !important;
+    outline: none !important;
+}
+.chat-header-right input[type="text"]:focus,
+#rename-input:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
-/* 3. Przycisk "Zapisz" obok nazwy pokoju */
+/* 3. Przycisk "Zapisz" obok nazwy */
 .chat-header-right button,
 #rename-btn {
     background-color: #374151 !important;
-    color: var(--text-main) !important;
-    border: 1px solid var(--border-color) !important;
+    color: #ffffff !important;
+    border: 1px solid #4b5563 !important;
+    border-radius: 6px !important;
+    padding: 0.5rem 1rem !important;
+    font-weight: 500 !important;
+    cursor: pointer;
+    transition: background 0.2s;
 }
 .chat-header-right button:hover,
 #rename-btn:hover {
     background-color: #4b5563 !important;
+}
+
+/* 4. Przycisk "Wyloguj się" na dole sidebara */
+#logout-btn {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+    color: #f87171 !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+    border-radius: 6px !important;
+    padding: 0.6rem !important;
+    font-weight: 600 !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+#logout-btn:hover {
+    background-color: rgba(239, 68, 68, 0.25) !important;
+    color: #fca5a5 !important;
 }

@@ -3,63 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MultiGem - Profesjonalny Czat AI</title>
-    <!-- ZMIANA TUTAJ: dodaliśmy /static/ -->
+    <title>MultiGem - Czat Zespołowy</title>
     <link rel="stylesheet" href="/static/style.css">
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Panel boczny (Sidebar) -->
-        <aside class="sidebar" id="sidebar">
+
+    <!-- Panel Logowania (widoczny domyślnie, dopóki brak sesji) -->
+    <div id="auth-overlay" class="auth-overlay">
+        <div class="auth-card">
+            <h2>🔐 Logowanie do MultiGem</h2>
+            <p>Zaloguj się, aby uzyskać dostęp do projektu ze znajomymi.</p>
+            <input type="email" id="auth-email" placeholder="Twój e-mail">
+            <input type="password" id="auth-password" placeholder="Hasło">
+            <div class="auth-buttons">
+                <button id="login-btn">Zaloguj się</button>
+                <button id="signup-btn" class="secondary-btn">Zarejestruj konto</button>
+            </div>
+            <div id="auth-error" class="auth-error"></div>
+        </div>
+    </div>
+
+    <!-- Główna aplikacja czatu (ukryta przed logowaniem) -->
+    <div id="app-container" class="app-container hidden">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <button class="new-chat-btn" id="new-chat-btn">＋ Nowa rozmowa</button>
+                <button id="new-chat-btn">+ Nowa rozmowa</button>
             </div>
-            
-            <div class="rooms-list" id="rooms-list"></div>
-
+            <div class="rooms-list" id="rooms-list">
+                <!-- Pokoje generowane dynamicznie -->
+            </div>
             <div class="sidebar-footer">
-                <div class="user-profile">
-                    <span>Użytkownik:</span>
-                    <input type="text" id="username-input" value="Użytkownik">
-                </div>
+                <span id="user-email-display" style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px; overflow: hidden; text-overflow: ellipsis;"></span>
+                <button id="logout-btn" class="secondary-btn" style="width: 100%; padding: 0.4rem; font-size: 0.85rem;">Wyloguj się</button>
             </div>
-        </aside>
+        </div>
 
-        <!-- Główny kontener czatu -->
-        <main class="chat-main">
-            <header class="chat-header">
-                <button class="toggle-sidebar-btn" id="toggle-sidebar-btn">☰</button>
-                <h2 id="current-room-title">Wybierz pokój</h2>
-                <div class="room-actions">
-                    <input type="text" id="rename-input" placeholder="Zmień nazwę pokoju...">
+        <!-- Chat Area -->
+        <div class="chat-main">
+            <div class="chat-header">
+                <div class="chat-header-left">
+                    <button id="toggle-sidebar-btn">☰</button>
+                    <h3 id="current-room-title">Główny czat</h3>
+                </div>
+                <div class="chat-header-right">
+                    <input type="text" id="rename-input" placeholder="Nazwa pokoju...">
                     <button id="rename-btn">Zapisz</button>
                 </div>
-            </header>
+            </div>
 
-            <div class="chat-messages" id="chat-messages"></div>
+            <div class="chat-messages" id="chat-messages">
+                <!-- Wiadomości -->
+            </div>
 
             <div class="chat-input-container">
-                <!-- Podgląd załączonego pliku -->
                 <div class="file-preview-container" id="file-preview" style="display: none;">
                     <span id="file-name"></span>
                     <button id="remove-file-btn">✕</button>
                 </div>
                 
                 <div class="chat-input-wrapper">
-                    <!-- Przycisk dodawania pliku (ukryty input typu file) -->
                     <input type="file" id="file-input" style="display: none;" accept="image/*,application/pdf,text/plain">
                     <button id="attach-btn" title="Dodaj plik lub zdjęcie">📎</button>
-                    
                     <textarea id="message-input" rows="1" placeholder="Napisz wiadomość lub dodaj plik..."></textarea>
                     <button id="send-btn">➔</button>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
 
-    <!-- ZMIANA TUTAJ: dodaliśmy /static/ do skryptu -->
     <script src="/static/script.js"></script>
 </body>
 </html>

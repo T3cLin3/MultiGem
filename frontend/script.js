@@ -11,17 +11,26 @@ try {
 
 const BACKEND_URL = '';
 
-// Sesja aktualnego pokoju
 let currentRoomId = 'main-chat';
 let currentRoomName = 'Główny czat';
-let username = 'Użytkownik';
+let currentUser = null;
 
-// Zmienne do obsługi załącznika pliku/zdjęcia
+// Zmienne załącznika
 let selectedFile = null;
 let selectedFileBase64 = null;
 let selectedFileMime = null;
 
 // Elementy DOM
+const authOverlay = document.getElementById('auth-overlay');
+const appContainer = document.getElementById('app-container');
+const authEmailInput = document.getElementById('auth-email');
+const authPasswordInput = document.getElementById('auth-password');
+const loginBtn = document.getElementById('login-btn');
+const signupBtn = document.getElementById('signup-btn');
+const authErrorEl = document.getElementById('auth-error');
+const userEmailDisplay = document.getElementById('user-email-display');
+const logoutBtn = document.getElementById('logout-btn');
+
 const roomsListEl = document.getElementById('rooms-list');
 const chatMessagesEl = document.getElementById('chat-messages');
 const messageInput = document.getElementById('message-input');
@@ -30,30 +39,84 @@ const newChatBtn = document.getElementById('new-chat-btn');
 const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
 const sidebar = document.getElementById('sidebar');
 const currentRoomTitle = document.getElementById('current-room-title');
-const usernameInput = document.getElementById('username-input');
 const renameInput = document.getElementById('rename-input');
 const renameBtn = document.getElementById('rename-btn');
 
-// Załączniki DOM
 const fileInput = document.getElementById('file-input');
 const attachBtn = document.getElementById('attach-btn');
 const filePreview = document.getElementById('file-preview');
 const fileNameEl = document.getElementById('file-name');
 const removeFileBtn = document.getElementById('remove-file-btn');
 
-if (usernameInput) {
-    usernameInput.addEventListener('input', (e) => {
-        username = e.target.value;
-    });
+// --- AUTENTYKACJA ---
+async function checkUserSession() {
+    if (!supabaseClient) return;
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+        currentUser = session.user;
+        showApp();
+    } else {
+        showAuth();
+    }
 }
 
-// Obsługa wyboru pliku
+function showApp() {
+    if (authOverlay) authOverlay.classList.add('hidden');
+    if (appContainer) appContainer.classList.remove('hidden');
+    if (userEmailDisplay) userEmailDisplay.textContent = `👤 ${currentUser.email}`;
+    init();
+}
+
+function showAuth() {
+    if (authOverlay) authOverlay.classList.remove('hidden');
+    if (appContainer) appContainer.classList.add('hidden');
+}
+
+if (loginBtn) {
+    loginBtn.onclick = async () => {
+        const email = authEmailInput.value.trim();
+        const password = authPasswordInput.value.trim();
+        authErrorEl.textContent = '';
+
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) {
+            authErrorEl.textContent = error.message;
+        } else {
+            currentUser = data.user;
+            showApp();
+        }
+    };
+}
+
+if (signupBtn) {
+    signupBtn.onclick = async () => {
+        const email = authEmailInput.value.trim();
+        const password = authPasswordInput.value.trim();
+        authErrorEl.textContent = '';
+
+        const { data, error } = await supabaseClient.auth.signUp({ email, password });
+        if (error) {
+            authErrorEl.textContent = error.message;
+        } else {
+            alert('Konto zostało utworzone! Możesz się teraz zalogować.');
+        }
+    };
+}
+
+if (logoutBtn) {
+    logoutBtn.onclick = async () => {
+        await supabaseClient.auth.signOut();
+        currentUser = null;
+        showAuth();
+    };
+}
+
+// Obsługa plików
 if (attachBtn && fileInput) {
     attachBtn.onclick = () => fileInput.click();
     fileInput.onchange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
         selectedFile = file;
         if (fileNameEl) fileNameEl.textContent = `📎 ${file.name}`;
         if (filePreview) filePreview.style.display = 'flex';
@@ -78,26 +141,18 @@ if (removeFileBtn) {
 }
 
 async function init() {
-    if (!supabaseClient) {
-        console.error("Brak klienta Supabase!");
-        return;
-    }
     await loadRooms();
     await loadMessages();
     setupRealtime();
 }
 
-// Pobieranie listy pokoi
+// Pokoje
 async function loadRooms() {
     if (!supabaseClient) return;
     const { data, error } = await supabaseClient.from('messages').select('room_id, content').order('id', { ascending: true });
-    if (error) {
-        console.error('Błąd pobierania pokoi:', error);
-        return;
-    }
+    if (error) return;
 
     const roomMap = new Map();
-    // Domyślny pokój zawsze na liście
     roomMap.set('main-chat', 'Główny czat');
 
     (data || []).forEach(m => {
@@ -149,39 +204,28 @@ async function loadRooms() {
     }
 }
 
-// Kliknięcie "Nowa rozmowa" tworzy unikalny pokój
 if (newChatBtn) {
     newChatBtn.onclick = () => {
         currentRoomId = 'room_' + Date.now();
         currentRoomName = 'Nowa rozmowa';
-        
         if (renameInput) renameInput.value = currentRoomName;
         if (chatMessagesEl) chatMessagesEl.innerHTML = '';
-        
         loadRooms();
         loadMessages();
     };
 }
 
-// Funkcja usuwania pokoju po ID
 async function deleteRoom(rId) {
     if (!confirm(`Czy na pewno chcesz trwale usunąć tę rozmowę?`)) return;
-
-    const { error } = await supabaseClient
-        .from('messages')
-        .delete()
-        .eq('room_id', rId);
-
+    const { error } = await supabaseClient.from('messages').delete().eq('room_id', rId);
     if (error) {
         alert('Błąd podczas usuwania pokoju: ' + error.message);
         return;
     }
-
     if (currentRoomId === rId) {
         currentRoomId = 'main-chat';
         currentRoomName = 'Główny czat';
     }
-
     await loadRooms();
     await loadMessages();
 }
@@ -194,11 +238,7 @@ async function loadMessages() {
         .eq('room_id', currentRoomId)
         .order('id', { ascending: true });
 
-    if (error) {
-        console.error('Błąd pobierania wiadomości:', error);
-        return;
-    }
-
+    if (error) return;
     renderMessages(data || []);
 }
 
@@ -211,7 +251,13 @@ function renderMessages(messages) {
 
         const authorDiv = document.createElement('div');
         authorDiv.className = 'message-author';
-        authorDiv.textContent = msg.role === 'model' ? 'Gemini' : (msg.author || 'Użytkownik');
+        
+        // Wyświetlanie maila użytkownika jako autora wiadomości
+        let authorName = msg.role === 'model' ? 'Gemini' : (msg.author || 'Użytkownik');
+        if (msg.role !== 'model' && msg.user_id && msg.author) {
+            authorName = msg.author; // Jeśli zapisaliśmy maila/nick
+        }
+        authorDiv.textContent = authorName;
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
@@ -244,7 +290,7 @@ function setupRealtime() {
         .subscribe();
 }
 
-// Wysyłanie wiadomości z załącznikiem
+// Wysyłanie wiadomości z przypisaniem użytkownika
 async function sendMessage() {
     if (!messageInput) return;
     const text = messageInput.value.trim();
@@ -253,10 +299,11 @@ async function sendMessage() {
     messageInput.value = '';
     messageInput.style.height = 'auto';
 
-    if (!supabaseClient) return;
+    if (!supabaseClient || !currentUser) return;
 
     const messagePayload = {
-        author: username,
+        author: currentUser.email, // Przypisanie maila zalogowanego użytkownika
+        user_id: currentUser.id,   // Przypisanie unikalnego ID użytkownika
         content: text || (selectedFile ? `[Załącznik: ${selectedFile.name}]` : ''),
         role: 'user',
         room_id: currentRoomId
@@ -268,7 +315,6 @@ async function sendMessage() {
     }
 
     const { error: userErr } = await supabaseClient.from('messages').insert(messagePayload);
-
     if (userErr) {
         alert('Błąd zapisu wiadomości: ' + userErr.message);
         return;
@@ -314,7 +360,6 @@ async function sendMessage() {
     }
 }
 
-// Event Listeners i automatyczne rozszerzanie pola tekstowego
 if (sendBtn) sendBtn.onclick = sendMessage;
 
 if (messageInput) {
@@ -331,7 +376,6 @@ if (messageInput) {
         }
     };
     
-    // Obsługa wklejania ze schowka (Ctrl + V)
     messageInput.addEventListener('paste', (e) => {
         const items = (e.clipboardData || e.originalEvent.clipboardData).items;
         for (let item of items) {
@@ -375,4 +419,5 @@ if (renameBtn) {
     };
 }
 
-init();
+// Uruchomienie sprawdzenia sesji przy starcie
+checkUserSession();

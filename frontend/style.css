@@ -414,3 +414,93 @@ body, html {
     scrollbar-width: thin;
     scrollbar-color: #374151 var(--bg-sidebar);
 }
+
+/* Ekran logowania */
+.auth-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: var(--bg-main);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.auth-card {
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border-color);
+    padding: 2.5rem;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+.auth-card h2 {
+    color: var(--text-main);
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.auth-card p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.auth-card input {
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    padding: 0.8rem;
+    border-radius: 6px;
+    color: var(--text-main);
+    font-size: 1rem;
+    outline: none;
+}
+
+.auth-card input:focus {
+    border-color: var(--accent-color);
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.auth-buttons button {
+    flex: 1;
+    padding: 0.8rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    background: var(--accent-color);
+    color: white;
+    transition: opacity 0.2s;
+}
+
+.auth-buttons button.secondary-btn {
+    background: #374151;
+    color: var(--text-main);
+}
+
+.auth-buttons button:hover {
+    opacity: 0.9;
+}
+
+.auth-error {
+    color: #ef4444;
+    font-size: 0.85rem;
+    margin-top: 5px;
+}
+
+.hidden {
+    display: none !important;
+}

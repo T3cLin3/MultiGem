@@ -86,9 +86,8 @@ if prompt := st.chat_input("Napisz coś do Gemini..."):
   with st.chat_message("user"):
     st.markdown(f"**{user_name}:** {prompt}")
 
-  # 7. Przygotowanie pełnej historii do wysłania do Gemini
+# 7. Przygotowanie pełnej historii do wysłania do Gemini
   try:
-    # Pobieramy aktualną listę po dodaniu nowej wiadomości
     fresh_res = (
         supabase.table("messages")
         .select("*")
@@ -99,6 +98,10 @@ if prompt := st.chat_input("Napisz coś do Gemini..."):
 
     contents = []
     for m in all_msgs:
+      # Ignorujemy elementy, które nie są słownikami
+      if not isinstance(m, dict):
+        continue
+
       r = "user" if m.get("role") == "user" else "model"
       prefix = (
           f"[{m.get('author', 'Użytkownik')}]: "
@@ -108,9 +111,31 @@ if prompt := st.chat_input("Napisz coś do Gemini..."):
       contents.append(
           types.Content(
               role=r,
-              parts=[types.Part.from_text(text=prefix + m.get("content", ""))],
+              parts=[types.Part.from_text(text=prefix + str(m.get("content", "")))],
           )
       )
+
+    # 8. Wywołanie modelu Gemini
+    with st.chat_message("assistant", avatar="🤖"):
+      with st.spinner("Gemini pisze..."):
+        ai_response = client.models.generate_content(
+            model="gemini-3.8-flash",
+            contents=contents,
+        )
+        bot_response = ai_response.text
+        st.markdown(bot_response)
+
+        # Zapisujemy odpowiedź AI w bazie Supabase
+        supabase.table("messages").insert({
+            "author": "Gemini",
+            "content": bot_response,
+            "role": "model",
+        }).execute()
+
+    st.rerun()
+
+  except Exception as e:
+    st.error(f"Wystąpił błąd podczas komunikacji z API Gemini: {e}")
 
     # 8. Wywołanie modelu Gemini
     with st.chat_message("assistant", avatar="🤖"):

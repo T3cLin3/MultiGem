@@ -504,3 +504,36 @@ body, html {
 .hidden {
     display: none !important;
 }
+
+/* --- Naprawa białych elementów w interfejsie --- */
+
+/* 1. Przycisk "+ Nowa rozmowa" w sidebarze */
+#new-chat-btn {
+    background-color: #374151 !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
+    transition: background 0.2s;
+}
+#new-chat-btn:hover {
+    background-color: #4b5563 !important;
+}
+
+/* 2. Pole edycji nazwy pokoju w nagłówku (górny input) */
+.chat-header-right input[type="text"],
+#rename-input {
+    background-color: var(--bg-sidebar) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+/* 3. Przycisk "Zapisz" obok nazwy pokoju */
+.chat-header-right button,
+#rename-btn {
+    background-color: #374151 !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
+}
+.chat-header-right button:hover,
+#rename-btn:hover {
+    background-color: #4b5563 !important;
+}

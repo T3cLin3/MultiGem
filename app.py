@@ -3,6 +3,8 @@ import streamlit as st
 from google import genai
 from google.genai import types
 from supabase import create_client
+from streamlit_autorefresh import st_autorefresh
+
 
 # 1. Konfiguracja strony
 st.set_page_config(
@@ -11,6 +13,7 @@ st.set_page_config(
 
 st.title("✨ MultiGem")
 st.caption("Wspólny dwuosobowy czat ze sztuczną inteligencją Gemini na żywo.")
+st_autorefresh(interval=3000, limit=None, key="datarefresh")
 
 # 2. Pobieranie kluczy API (Gemini + Supabase)
 api_key = os.getenv("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY")

@@ -132,12 +132,21 @@ if prompt := st.chat_input("Napisz coś do Gemini..."):
         except Exception as api_err:
           error_msg = str(api_err)
           if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
-            st.error(
-                "⚠️ Wyczerpano darmowy limit zapytań do Gemini (Rate Limit)."
-                " Odczekaj minutę i spróbuj ponownie."
+            bot_response = (
+                "⚠️ [Błąd API]: Wyczerpano darmowy limit zapytań do Gemini."
+                " Odczekaj chwilę."
             )
           else:
-            st.error(f"Błąd API Gemini: {error_msg}")
+            bot_response = f"⚠️ [Błąd API Gemini]: {error_msg}"
+
+          st.error(bot_response)
+
+          # Zapisujemy informację o błędzie w bazie, żeby była widoczna na czacie
+          supabase.table("messages").insert({
+              "author": "System",
+              "content": bot_response,
+              "role": "model",
+          }).execute()
 
     # Odświeżamy widok, żeby pokazać zapisane wiadomości
     st.rerun()

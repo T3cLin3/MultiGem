@@ -63,38 +63,33 @@ if prompt := st.chat_input("Napisz coś do Gemini..."):
   with st.chat_message(f"user ({user_name})"):
     st.markdown(prompt)
 
-  # 7. Przygotowanie historii dla API Gemini
-  # API wymaga specyficznego formatu: lista obiektów z 'role' ('user' lub 'model') oraz 'parts'
-  api_history = []
-  for msg in st.session_state.messages:
-    # Mapujemy role na format akceptowany przez SDK google-genai
-    role_to_send = (
-        "user" if msg["role"] == "user" else "model"
-    )  # API Gemini rozróżnia 'user' i 'model'
-    # Do treści wiadomości użytkownika możemy dokleić informację o autorze, żeby AI wiedziało, z kim rozmawia
-    content_to_send = (
-        f"[{msg.get('author', 'Użytkownik')}]: {msg['content']}"
-        if msg["role"] == "user"
-        else msg["content"]
-    )
-
-    api_history.append(
-        types.Content(
-            role=role_to_send,
-            parts=[types.Part.from_text(text=content_to_send)],
-        )
-    )
-
-  # 8. Wywołanie API Gemini (używamy lekkiego i szybkiego modelu gemini-2.5-flash)
+  # 7. Wywołanie API Gemini (używamy stabilnego modelu 'gemini-1.5-flash')
   with st.chat_message("assistant"):
     with st.spinner("Gemini pisze..."):
       try:
-        # Tworzymy czat z uwzględnieniem dotychczasowej historii
-        chat = client.chats.create(model="gemini-1.5-flash", history=api_history[:-1])
-        # Wysyłamy ostatnią wiadomość
-        response = chat.send_message(api_history[-1].parts[0].text)
-        bot_response = response.text
+        # Konwertujemy historię Streamlita na format akceptowany przez nową bibliotekę google-genai
+        contents = []
+        for msg in st.session_state.messages:
+          role = "user" if msg["role"] == "user" else "model"
+          prefix = (
+              f"[{msg.get('author', 'Użytkownik')}]: "
+              if msg["role"] == "user"
+              else ""
+          )
+          contents.append(
+              types.Content(
+                  role=role,
+                  parts=[types.Part.from_text(text=prefix + msg["content"])],
+              )
+          )
 
+        # Wywołanie modelu generowania zawartości z pełną historią
+        response = client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=contents,
+        )
+
+        bot_response = response.text
         st.markdown(bot_response)
 
         # Zapisujemy odpowiedź modelu w historii stanu

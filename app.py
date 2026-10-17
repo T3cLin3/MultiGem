@@ -6,39 +6,108 @@ from supabase import create_client
 
 # 1. Konfiguracja strony
 st.set_page_config(
-    page_title="MultiGem - Czat", page_icon="💬", layout="centered"
+    page_title="MultiGem", page_icon="✨", layout="wide"
 )
 
-# 2. Czysty i minimalistyczny styl CSS (bez zbędnych ozdobników)
+# 2. Zaawansowane style CSS nadające profesjonalny wygląd
 st.markdown(
     """
     <style>
-        .main {
-            background-color: #0e1117;
+        /* Globalne tło i czcionka */
+        .stApp {
+            background-color: #0b0f19;
+            color: #f3f4f6;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
-        /* Zwarty panel boczny bez nadmiernego scrollowania */
+
+        /* Ukrycie elementów systemowych Streamlit */
+        header, #MainMenu, footer { visibility: hidden; }
+
+        /* Panel boczny (Sidebar) */
         [data-testid="stSidebar"] {
-            background-color: #161920;
-            padding-top: 1rem;
+            background-color: #030712;
+            border-right: 1px solid #1f2937;
+            padding: 1.5rem 1rem;
         }
-        /* Mniejsze odstępy w sidebarze */
-        [data-testid="stSidebar"] .block-container {
-            padding: 1rem;
+
+        /* Nagłówki w sidebarze */
+        [data-testid="stSidebar"] h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #9ca3af;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
         }
-        /* Stylowanie przycisków */
+
+        /* Styl przycisków */
         .stButton > button {
-            border-radius: 6px;
-            width: 100%;
+            background-color: #1f2937;
+            color: #f3f4f6;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .stButton > button:hover {
+            background-color: #374151;
+            border-color: #4b5563;
+            color: #ffffff;
+        }
+
+        /* Przycisk główny (Nowa rozmowa) */
+        div.stButton > button[kind="primary"], [data-testid="stSidebar"] .stButton:first-of-type > button {
+            background-color: #4f46e5;
+            border-color: #4f46e5;
+            color: white;
+        }
+        div.stButton > button[kind="primary"]:hover {
+            background-color: #4338ca;
+        }
+
+        /* Pola tekstowe */
+        .stTextInput input {
+            background-color: #1f2937 !important;
+            border: 1px solid #374151 !important;
+            color: #f3f4f6 !important;
+            border-radius: 8px !important;
+        }
+        .stTextInput input:focus {
+            border-color: #4f46e5 !important;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2) !important;
+        }
+
+        /* Styl dymków czatu */
+        [data-testid="stChatMessage"] {
+            padding: 1rem 1.2rem;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            border: 1px solid transparent;
+        }
+        
+        /* Dymek użytkownika */
+        [data-testid="stChatMessage"][data-testid*="user"] {
+            background-color: #111827;
+            border-color: #1f2937;
+        }
+
+        /* Dymek asystenta (Gemini) */
+        [data-testid="stChatMessage"][data-testid*="assistant"] {
+            background-color: #1f2937;
+            border-color: #374151;
+        }
+
+        /* Wyczyszczenie marginesów kontenera głównego */
+        .block-container {
+            max-width: 800px;
+            padding-top: 2rem;
         }
     </style>
 """,
     unsafe_allow_html=True,
 )
 
-st.title("💬 MultiGem")
-st.caption("Wspólny czat z Gemini w czasie rzeczywistym.")
-
-# 3. Pobieranie kluczy API
+# 3. Inicjalizacja kluczy
 api_key = os.getenv("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY")
 supabase_url = os.getenv("SUPABASE_URL") or st.secrets.get("SUPABASE_URL")
 supabase_key = os.getenv("SUPABASE_KEY") or st.secrets.get("SUPABASE_KEY")
@@ -51,7 +120,7 @@ client = genai.Client(api_key=api_key)
 supabase = create_client(supabase_url, supabase_key)
 
 if "current_room" not in st.session_state:
-  st.session_state.current_room = "Ogólny"
+  st.session_state.current_room = "Główny czat"
 
 # Pobieranie listy pokoi
 try:
@@ -60,66 +129,55 @@ try:
   existing_rooms = sorted(
       list(
           set(
-              m.get("room_id", "Ogólny")
+              m.get("room_id", "Główny czat")
               for m in rooms_data
               if isinstance(m, dict) and m.get("room_id")
           )
       )
   )
   if not existing_rooms:
-    existing_rooms = ["Ogólny"]
+    existing_rooms = ["Główny czat"]
 except Exception:
   existing_rooms = [st.session_state.current_room]
 
 if st.session_state.current_room not in existing_rooms:
   existing_rooms.append(st.session_state.current_room)
 
-# 4. Zwarty Panel Boczny
+# 4. Elegancki Panel Boczny
 with st.sidebar:
-  st.subheader("Ustawienia")
-  user_name = st.text_input("Twoje imię:", value="Użytkownik")
+  st.markdown("### Profil")
+  user_name = st.text_input("Imię użytkownika", value="Użytkownik", label_visibility="collapsed")
 
-  if st.button("Nowa rozmowa"):
+  if st.button("✨ Nowa rozmowa", use_container_width=True):
     new_room_name = f"Rozmowa {len(existing_rooms) + 1}"
     st.session_state.current_room = new_room_name
     st.rerun()
 
-  st.subheader("Wątki")
-  selected_room = st.radio(
-      "Wybierz pokój:",
-      options=existing_rooms,
-      index=existing_rooms.index(st.session_state.current_room)
-      if st.session_state.current_room in existing_rooms
-      else 0,
-      label_visibility="collapsed",
-  )
-
-  if selected_room != st.session_state.current_room:
-    st.session_state.current_room = selected_room
-    st.rerun()
-
-  st.divider()
+  st.markdown("### Wątki rozmów")
   
-  # Szybka zmiana nazwy
-  new_room_name_input = st.text_input(
-      "Zmień nazwę wątku:", value=st.session_state.current_room
-  )
-  if st.button("Zapisz nazwę"):
-    if (
-        new_room_name_input
-        and new_room_name_input != st.session_state.current_room
-    ):
+  # Zamiast brzydkiego radia robimy zgrabne przyciski dla każdego pokoju
+  for room in existing_rooms:
+    is_active = room == st.session_state.current_room
+    button_type = "primary" if is_active else "secondary"
+    if st.button(f"💬 {room}", key=f"room_btn_{room}", use_container_width=True, type=button_type):
+      if not is_active:
+        st.session_state.current_room = room
+        st.rerun()
+
+  st.markdown("---")
+  st.markdown("### Ustawienia wątku")
+  new_name_input = st.text_input("Zmień nazwę:", value=st.session_state.current_room, label_visibility="collapsed")
+  if st.button("Zapisz zmianę", use_container_width=True):
+    if new_name_input and new_name_input != st.session_state.current_room:
       old_room = st.session_state.current_room
       try:
-        supabase.table("messages").update({"room_id": new_room_name_input}).eq(
-            "room_id", old_room
-        ).execute()
-        st.session_state.current_room = new_room_name_input
+        supabase.table("messages").update({"room_id": new_name_input}).eq("room_id", old_room).execute()
+        st.session_state.current_room = new_name_input
         st.rerun()
       except Exception as e:
         st.error(f"Błąd: {e}")
 
-  if st.button("Odśwież"):
+  if st.button("🔄 Odśwież dane", use_container_width=True):
     st.rerun()
 
 room_name = st.session_state.current_room
@@ -138,9 +196,9 @@ except Exception as e:
   st.error(f"Błąd pobierania: {e}")
   messages = []
 
-# 6. Wyświetlanie historii czatu z wyraźnym podziałem na autorów
-st.markdown(f"**Aktywny wątek:** `{room_name}`")
-st.markdown("---")
+# 6. Główny interfejs czatu (Czysty, profesjonalny widok)
+st.markdown(f"## ✦ {room_name}")
+st.markdown("<div style='margin-bottom: 2rem;'></div>", unsafe_allow_html=True)
 
 for msg in messages:
   if not isinstance(msg, dict):
@@ -151,14 +209,15 @@ for msg in messages:
   content = msg.get("content", "")
 
   if role == "model":
-    with st.chat_message("assistant", avatar="🤖"):
-      st.markdown(f"**Gemini:**\n\n{content}")
+    with st.chat_message("assistant", avatar="✨"):
+      st.markdown(content)
   else:
+    # Używamy imienia użytkownika jako czystego nagłówka nad treścią bez sztucznych ozdobników
     with st.chat_message("user", avatar="👤"):
-      st.markdown(f"**{author}:**\n\n{content}")
+      st.markdown(f"**{author}**\n\n{content}")
 
-# 7. Obsługa wysyłania wiadomości
-if prompt := st.chat_input("Napisz wiadomość..."):
+# 7. Obsługa wiadomości
+if prompt := st.chat_input("Wpisz wiadomość..."):
   try:
     supabase.table("messages").insert({
         "author": user_name,
@@ -195,15 +254,15 @@ if prompt := st.chat_input("Napisz wiadomość..."):
     if not contents:
       contents = [prompt]
 
-    with st.chat_message("assistant", avatar="🤖"):
-      with st.spinner("Gemini pisze..."):
+    with st.chat_message("assistant", avatar="✨"):
+      with st.spinner("Gemini generuje odpowiedź..."):
         try:
           ai_response = client.models.generate_content(
               model="gemini-3.8-flash",
               contents=contents,
           )
           bot_response = ai_response.text
-          st.markdown(f"**Gemini:**\n\n{bot_response}")
+          st.markdown(bot_response)
 
           supabase.table("messages").insert({
               "author": "Gemini",
@@ -215,7 +274,7 @@ if prompt := st.chat_input("Napisz wiadomość..."):
         except Exception as api_err:
           error_msg = str(api_err)
           if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
-            bot_response = "⚠️ [Limit API]: Wyczerpano darmowy limit zapytań."
+            bot_response = "⚠️ [Limit API]: Wyczerpano darmowy limit zapytań do Gemini. Spróbuj za chwilę."
           else:
             bot_response = f"⚠️ [Błąd API]: {error_msg}"
 

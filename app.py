@@ -4,13 +4,55 @@ from google import genai
 from google.genai import types
 from supabase import create_client
 
-# 1. Konfiguracja strony
+# 1. Konfiguracja strony i nowoczesne style CSS
 st.set_page_config(
-    page_title="MultiGem - Wspólny Czat AI", page_icon="🤖", layout="centered"
+    page_title="MultiGem - Wspólny Czat AI", page_icon="✨", layout="centered"
+)
+
+# Wstrzykujemy customowy CSS, aby poprawić wygląd interfejsu
+st.markdown(
+    """
+    <style>
+        /* Styl ogólny strony */
+        .main {
+            background-color: #0e1117;
+        }
+        /* Nagłówki */
+        h1, h2, h3 {
+            font-family: 'Inter', sans-serif;
+            letter-spacing: -0.5px;
+        }
+        /* Styl panelu bocznego */
+        [data-testid="stSidebar"] {
+            background-color: #161920;
+            border-right: 1px solid #262730;
+        }
+        /* Styl przycisków */
+        .stButton>button {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .stButton>button:hover {
+            border-color: #4f46e5;
+            color: #4f46e5;
+        }
+        /* Pola tekstowe */
+        .stTextInput>div>div>input {
+            border-radius: 8px;
+        }
+        /* Ukrycie domyślnego menu Streamlit dla czystszego widoku */
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+    </style>
+""",
+    unsafe_allow_html=True,
 )
 
 st.title("✨ MultiGem")
-st.caption("Wspólny dwuosobowy czat ze sztuczną inteligencją Gemini na żywo.")
+st.caption(
+    "Wspólny, dwuosobowy czat ze sztuczną inteligencją w czasie rzeczywistym."
+)
 
 # 2. Pobieranie kluczy API
 api_key = os.getenv("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY")
@@ -18,7 +60,10 @@ supabase_url = os.getenv("SUPABASE_URL") or st.secrets.get("SUPABASE_URL")
 supabase_key = os.getenv("SUPABASE_KEY") or st.secrets.get("SUPABASE_KEY")
 
 if not api_key or not supabase_url or not supabase_key:
-  st.error("Brak wymaganych kluczy w Streamlit Secrets!")
+  st.error(
+      "⚠️ Brak wymaganych kluczy w Streamlit Secrets! Skonfiguruj"
+      " `GEMINI_API_KEY`, `SUPABASE_URL` oraz `SUPABASE_KEY`."
+  )
   st.stop()
 
 client = genai.Client(api_key=api_key)
@@ -49,23 +94,23 @@ except Exception:
 if st.session_state.current_room not in existing_rooms:
   existing_rooms.append(st.session_state.current_room)
 
-# 4. Panel boczny w stylu Gemini
+# 4. Panel boczny (Sidebar w stylu ChatGPT / Gemini)
 with st.sidebar:
-  st.header("⚙️ Ustawienia")
+  st.markdown("### 👤 Profil użytkownika")
   user_name = st.text_input("Twoje imię:", value="Użytkownik")
 
-  st.divider()
+  st.markdown("---")
 
   # Przycisk tworzenia nowego czatu
-  if st.button("➕ Nowy czat", use_container_width=True):
+  if st.button("➕ Nowa rozmowa", use_container_width=True):
     new_room_name = f"Rozmowa {len(existing_rooms) + 1}"
     st.session_state.current_room = new_room_name
     st.rerun()
 
-  st.subheader("💬 Twoje rozmowy")
+  st.markdown("### 💬 Twoje wątki")
 
   selected_room = st.radio(
-      "Wybierz wątek:",
+      "Wybierz pokój:",
       options=existing_rooms,
       index=existing_rooms.index(st.session_state.current_room)
       if st.session_state.current_room in existing_rooms
@@ -77,28 +122,32 @@ with st.sidebar:
     st.session_state.current_room = selected_room
     st.rerun()
 
-  st.divider()
-  
+  st.markdown("---")
+
   # Opcja zmiany nazwy aktywnego pokoju
-  st.subheader("✏️ Edytuj pokój")
+  st.markdown("### ✏️ Edytuj wątek")
   new_room_name_input = st.text_input(
-      "Nowa nazwa pokoju:", value=st.session_state.current_room
+      "Nazwa wątku:",
+      value=st.session_state.current_room,
+      label_visibility="collapsed",
   )
   if st.button("Zmień nazwę", use_container_width=True):
-    if new_room_name_input and new_room_name_input != st.session_state.current_room:
+    if (
+        new_room_name_input
+        and new_room_name_input != st.session_state.current_room
+    ):
       old_room = st.session_state.current_room
       try:
-        # Aktualizujemy room_id we wszystkich wiadomościach w bazie
         supabase.table("messages").update({"room_id": new_room_name_input}).eq(
             "room_id", old_room
         ).execute()
         st.session_state.current_room = new_room_name_input
-        st.success("Zmieniono nazwę pokoju!")
+        st.success("Zmieniono nazwę!")
         st.rerun()
       except Exception as e:
-        st.error(f"Nie udało się zmienić nazwy: {e}")
+        st.error(f"Błąd zmiany nazwy: {e}")
 
-  st.divider()
+  st.markdown("---")
   if st.button("🔄 Odśwież widok", use_container_width=True):
     st.rerun()
 
@@ -118,8 +167,13 @@ except Exception as e:
   st.error(f"Błąd pobierania wiadomości: {e}")
   messages = []
 
-# 6. Wyświetlanie historii czatu
-st.markdown(f"### Aktualny pokój: `{room_name}`")
+# 6. Nagłówek aktywnego pokoju i wyświetlanie historii czatu
+st.markdown(
+    f"##### 📍 Aktywny wątek: <span style='color: #4f46e5;'>{room_name}</span>",
+    unsafe_allow_html=True,
+)
+st.markdown("---")
+
 for msg in messages:
   if not isinstance(msg, dict):
     continue
@@ -136,7 +190,7 @@ for msg in messages:
       st.markdown(f"**{author}:** {content}")
 
 # 7. Obsługa nowej wiadomości
-if prompt := st.chat_input(f"Napisz coś do Gemini..."):
+if prompt := st.chat_input(f"Napisz wiadomość w wątku '{room_name}'..."):
   try:
     supabase.table("messages").insert({
         "author": user_name,
@@ -145,7 +199,7 @@ if prompt := st.chat_input(f"Napisz coś do Gemini..."):
         "room_id": room_name,
     }).execute()
   except Exception as e:
-    st.error(f"Błąd zapisu: {e}")
+    st.error(f"Błąd zapisu wiadomości: {e}")
 
   try:
     fresh_res = (
@@ -174,7 +228,7 @@ if prompt := st.chat_input(f"Napisz coś do Gemini..."):
       contents = [prompt]
 
     with st.chat_message("assistant", avatar="🤖"):
-      with st.spinner("Gemini pisze..."):
+      with st.spinner("Gemini pisze odpowiedź..."):
         try:
           ai_response = client.models.generate_content(
               model="gemini-3.8-flash",

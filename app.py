@@ -3,8 +3,6 @@ import streamlit as st
 from google import genai
 from google.genai import types
 from supabase import create_client
-from streamlit_autorefresh import st_autorefresh
-
 
 # 1. Konfiguracja strony
 st.set_page_config(
@@ -13,52 +11,49 @@ st.set_page_config(
 
 st.title("✨ MultiGem")
 st.caption("Wspólny dwuosobowy czat ze sztuczną inteligencją Gemini na żywo.")
-st_autorefresh(interval=3000, limit=None, key="datarefresh")
 
-# 2. Pobieranie kluczy API (Gemini + Supabase)
+# 2. Pobieranie kluczy API
 api_key = os.getenv("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY")
 supabase_url = os.getenv("SUPABASE_URL") or st.secrets.get("SUPABASE_URL")
 supabase_key = os.getenv("SUPABASE_KEY") or st.secrets.get("SUPABASE_KEY")
 
 if not api_key or not supabase_url or not supabase_key:
-  st.error(
-      "Brak wymaganych kluczy! Upewnij się, że w Streamlit Secrets dodano"
-      " `GEMINI_API_KEY`, `SUPABASE_URL` oraz `SUPABASE_KEY`."
-  )
+  st.error("Brak wymaganych kluczy w Streamlit Secrets!")
   st.stop()
 
-# Inicjalizacja klientów
 client = genai.Client(api_key=api_key)
 supabase = create_client(supabase_url, supabase_key)
 
-# 3. Panel boczny
+# 3. Panel boczny (Ustawienia i Pokoje)
 with st.sidebar:
   st.header("⚙️ Ustawienia sesji")
   user_name = st.text_input("Twoje imię:", value="Użytkownik")
+  
   st.divider()
-  st.info(
-      "Teraz wiadomości zapisują się w bazie danych! Wyślij ten link"
-      " znajomemu, a obaj zobaczycie tę samą rozmowę na żywo."
-  )
+  st.subheader("💬 Pokoje / Wątki")
+  # Możesz wpisać dowolną nazwę pokoju, żeby przełączyć się na inny wątek rozmowy!
+  room_name = st.text_input("Nazwa pokoju:", value="ogólny")
+  
+  st.divider()
   if st.button("🔄 Odśwież czat"):
     st.rerun()
 
-# 4. Pobieranie historii wiadomości z bazy Supabase
+# 4. Pobieranie historii wiadomości tylko dla wybranego pokoju
 try:
   response = (
       supabase.table("messages")
       .select("*")
-      .order("created_at", desc=False)
+      .eq("room_id", room_name)
+      .order("id", desc=False)
       .execute()
   )
-  messages = response.data
+  messages = response.data or []
 except Exception as e:
-  st.error(f"Błąd pobierania wiadomości z bazy: {e}")
+  st.error(f"Błąd pobierania wiadomości: {e}")
   messages = []
 
 # 5. Wyświetlanie historii czatu
 for msg in messages:
-  # Upewniamy się, że msg to słownik, żeby uniknąć błędów typu AttributeError
   if not isinstance(msg, dict):
     continue
 
@@ -74,22 +69,24 @@ for msg in messages:
       st.markdown(f"**{author}:** {content}")
 
 # 6. Obsługa nowej wiadomości
-if prompt := st.chat_input("Napisz coś do Gemini..."):
-  # KROK A: Zapisujemy wiadomość użytkownika w bazie NATYCHMIAST
+if prompt := st.chat_input(f"Napisz coś w pokoju '{room_name}'..."):
+  # Zapisujemy wiadomość użytkownika z przypisaniem do aktualnego pokoju
   try:
     supabase.table("messages").insert({
         "author": user_name,
         "content": prompt,
         "role": "user",
+        "room_id": room_name,
     }).execute()
   except Exception as e:
-    st.error(f"Błąd zapisu wiadomości: {e}")
+    st.error(f"Błąd zapisu: {e}")
 
-  # KROK B: Pobieramy pełną historię dla Gemini
+  # 7. Pobieramy pełną historię dla Gemini w tym pokoju
   try:
     fresh_res = (
         supabase.table("messages")
         .select("*")
+        .eq("room_id", room_name)
         .order("id", desc=False)
         .execute()
     )
@@ -111,7 +108,7 @@ if prompt := st.chat_input("Napisz coś do Gemini..."):
     if not contents:
       contents = [prompt]
 
-    # KROK C: Wywołanie modelu Gemini (z zabezpieczeniem przed błędem limitu)
+    # 8. Wywołanie modelu Gemini
     with st.chat_message("assistant", avatar="🤖"):
       with st.spinner("Gemini pisze..."):
         try:
@@ -122,11 +119,12 @@ if prompt := st.chat_input("Napisz coś do Gemini..."):
           bot_response = ai_response.text
           st.markdown(bot_response)
 
-          # Zapisujemy odpowiedź bota w bazie
+          # Zapisujemy odpowiedź bota w bazie dla tego pokoju
           supabase.table("messages").insert({
               "author": "Gemini",
               "content": bot_response,
               "role": "model",
+              "room_id": room_name,
           }).execute()
 
         except Exception as api_err:
@@ -141,16 +139,14 @@ if prompt := st.chat_input("Napisz coś do Gemini..."):
 
           st.error(bot_response)
 
-          # Zapisujemy informację o błędzie w bazie, żeby była widoczna na czacie
           supabase.table("messages").insert({
               "author": "System",
               "content": bot_response,
               "role": "model",
+              "room_id": room_name,
           }).execute()
 
-    # Odświeżamy widok, żeby pokazać zapisane wiadomości
     st.rerun()
 
   except Exception as e:
     st.error(f"Wystąpił błąd ogólny: {e}")
-#cos

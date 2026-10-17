@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiGem - Profesjonalny Czat AI</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Panel boczny (Sidebar) -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="new-chat-btn" id="new-chat-btn">＋ Nowa rozmowa</button>
+            </div>
+            
+            <div class="rooms-list" id="rooms-list">
+                <!-- Tutaj JavaScript dynamicznie wrzuci listę wątków -->
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <span>Użytkownik:</span>
+                    <input type="text" id="username-input" value="Użytkownik">
+                </div>
+            </div>
+        </aside>
+
+        <!-- Główny kontener czatu -->
+        <main class="chat-main">
+            <header class="chat-header">
+                <button class="toggle-sidebar-btn" id="toggle-sidebar-btn">☰</button>
+                <h2 id="current-room-title">Wybierz pokój</h2>
+                <div class="room-actions">
+                    <input type="text" id="rename-input" placeholder="Zmień nazwę pokoju...">
+                    <button id="rename-btn">Zapisz</button>
+                </div>
+            </header>
+
+            <div class="chat-messages" id="chat-messages">
+                <!-- Tutaj będą pojawiać się wiadomości -->
+            </div>
+
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <textarea id="message-input" rows="1" placeholder="Napisz wiadomość..."></textarea>
+                    <button id="send-btn">➔</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

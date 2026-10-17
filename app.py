@@ -9,7 +9,7 @@ st.set_page_config(
     page_title="MultiGem", page_icon="", layout="wide"
 )
 
-# 2. Profesjonalne style CSS (bez zbędnych ozdobników i emoji)
+# 2. Profesjonalny CSS z naprawionym przyciskiem rozwijania paska bocznego
 st.markdown(
     """
     <style>
@@ -19,9 +19,20 @@ st.markdown(
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
-        /* Ukrywamy tylko niepotrzebne elementy, zostawiając kontrolki Streamlita (w tym przycisk rozwijania paska) */
+        /* Ukrywamy tylko nagłówek dokumentu i stopkę, zachowując kontrolki aplikacji */
         header { visibility: hidden; }
         #MainMenu, footer { visibility: hidden; }
+
+        /* Wymuszenie stałej widoczności przycisku rozwijania paska bocznego po jego schowaniu */
+        [data-testid="collapsedControl"] {
+            display: block !important;
+            visibility: visible !important;
+            color: #9ca3af !important;
+            background-color: #1f2937 !important;
+            border-radius: 4px;
+            padding: 4px;
+            z-index: 999999;
+        }
 
         /* Panel boczny */
         [data-testid="stSidebar"] {

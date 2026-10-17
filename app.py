@@ -55,6 +55,10 @@ except Exception as e:
 
 # 5. Wyświetlanie historii czatu
 for msg in messages:
+  # Upewniamy się, że msg to słownik, żeby uniknąć błędów typu AttributeError
+  if not isinstance(msg, dict):
+    continue
+
   role = msg.get("role", "user")
   author = msg.get("author", "Użytkownik")
   content = msg.get("content", "")

@@ -15,7 +15,6 @@ let currentRoomId = 'main-chat';
 let currentRoomName = 'Główny czat';
 let currentUser = null;
 
-// Zmienne załącznika
 let selectedFile = null;
 let selectedFileBase64 = null;
 let selectedFileMime = null;
@@ -39,8 +38,8 @@ const newChatBtn = document.getElementById('new-chat-btn');
 const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
 const sidebar = document.getElementById('sidebar');
 const currentRoomTitle = document.getElementById('current-room-title');
+const currentRoomContainer = document.getElementById('current-room-container');
 const renameInput = document.getElementById('rename-input');
-const renameBtn = document.getElementById('rename-btn');
 
 const fileInput = document.getElementById('file-input');
 const attachBtn = document.getElementById('attach-btn');
@@ -146,19 +145,22 @@ async function init() {
     setupRealtime();
 }
 
-// Pokoje
+// Przechowywanie niestandardowych nazw pokoi w pamięci przeglądarki (localStorage) lub mapie
+const roomNamesMap = new Map();
+
 async function loadRooms() {
     if (!supabaseClient) return;
     const { data, error } = await supabaseClient.from('messages').select('room_id, content').order('id', { ascending: true });
     if (error) return;
 
     const roomMap = new Map();
-    roomMap.set('main-chat', 'Główny czat');
+    roomMap.set('main-chat', roomNamesMap.get('main-chat') || 'Główny czat');
 
     (data || []).forEach(m => {
         const rId = m.room_id || 'main-chat';
         if (!roomMap.has(rId)) {
-            roomMap.set(rId, rId === 'main-chat' ? 'Główny czat' : `Rozmowa (${rId.slice(-4)})`);
+            const defaultName = rId === 'main-chat' ? 'Główny czat' : `Rozmowa (${rId.slice(-4)})`;
+            roomMap.set(rId, roomNamesMap.get(rId) || defaultName);
         }
     });
 
@@ -178,7 +180,6 @@ async function loadRooms() {
             div.onclick = () => {
                 currentRoomId = rId;
                 currentRoomName = roomName;
-                if (renameInput) renameInput.value = roomName;
                 loadRooms();
                 loadMessages();
             };
@@ -199,16 +200,13 @@ async function loadRooms() {
     }
 
     if (currentRoomTitle) currentRoomTitle.textContent = currentRoomName;
-    if (renameInput && document.activeElement !== renameInput) {
-        renameInput.value = currentRoomName;
-    }
 }
 
 if (newChatBtn) {
     newChatBtn.onclick = () => {
         currentRoomId = 'room_' + Date.now();
         currentRoomName = 'Nowa rozmowa';
-        if (renameInput) renameInput.value = currentRoomName;
+        roomNamesMap.set(currentRoomId, currentRoomName);
         if (chatMessagesEl) chatMessagesEl.innerHTML = '';
         loadRooms();
         loadMessages();
@@ -251,12 +249,7 @@ function renderMessages(messages) {
 
         const authorDiv = document.createElement('div');
         authorDiv.className = 'message-author';
-        
-        // Wyświetlanie maila użytkownika jako autora wiadomości
         let authorName = msg.role === 'model' ? 'Gemini' : (msg.author || 'Użytkownik');
-        if (msg.role !== 'model' && msg.user_id && msg.author) {
-            authorName = msg.author; // Jeśli zapisaliśmy maila/nick
-        }
         authorDiv.textContent = authorName;
 
         const contentDiv = document.createElement('div');
@@ -290,7 +283,39 @@ function setupRealtime() {
         .subscribe();
 }
 
-// Wysyłanie wiadomości z przypisaniem użytkownika
+// Obsługa edycji nazwy pokoju w miejscu (po kliknięciu w nagłówek)
+if (currentRoomContainer && currentRoomTitle && renameInput) {
+    currentRoomContainer.onclick = () => {
+        currentRoomTitle.classList.add('hidden');
+        renameInput.classList.remove('hidden');
+        renameInput.value = currentRoomName;
+        renameInput.focus();
+        renameInput.select();
+    };
+
+    const saveRename = () => {
+        const newName = renameInput.value.trim();
+        if (newName && newName !== currentRoomName) {
+            currentRoomName = newName;
+            roomNamesMap.set(currentRoomId, currentRoomName);
+            loadRooms();
+        }
+        renameInput.classList.add('hidden');
+        currentRoomTitle.classList.remove('hidden');
+    };
+
+    renameInput.onblur = saveRename;
+    renameInput.onkeydown = (e) => {
+        if (e.key === 'Enter') {
+            saveRename();
+        } else if (e.key === 'Escape') {
+            renameInput.classList.add('hidden');
+            currentRoomTitle.classList.remove('hidden');
+        }
+    };
+}
+
+// Wysyłanie wiadomości
 async function sendMessage() {
     if (!messageInput) return;
     const text = messageInput.value.trim();
@@ -302,8 +327,8 @@ async function sendMessage() {
     if (!supabaseClient || !currentUser) return;
 
     const messagePayload = {
-        author: currentUser.email, // Przypisanie maila zalogowanego użytkownika
-        user_id: currentUser.id,   // Przypisanie unikalnego ID użytkownika
+        author: currentUser.email,
+        user_id: currentUser.id,
         content: text || (selectedFile ? `[Załącznik: ${selectedFile.name}]` : ''),
         role: 'user',
         room_id: currentRoomId
@@ -407,17 +432,5 @@ if (toggleSidebarBtn && sidebar) {
     };
 }
 
-if (renameBtn) {
-    renameBtn.onclick = async () => {
-        if (!renameInput || !supabaseClient) return;
-        const newName = renameInput.value.trim();
-        if (!newName || newName === currentRoomName) return;
-
-        currentRoomName = newName;
-        if (currentRoomTitle) currentRoomTitle.textContent = currentRoomName;
-        loadRooms();
-    };
-}
-
-// Uruchomienie sprawdzenia sesji przy starcie
+// Uruchomienie
 checkUserSession();

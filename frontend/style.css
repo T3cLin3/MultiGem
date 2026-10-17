@@ -1,26 +1,23 @@
 :root {
     --bg-main: #0b0f19;
-    --bg-sidebar: #030712;
-    --bg-chatbox: #161920;
-    --border-color: #1f2937;
+    --bg-sidebar: #070a12;
+    --border-color: #1f293d;
     --text-main: #f3f4f6;
     --text-muted: #9ca3af;
-    --accent-color: #4f46e5;
-    --accent-hover: #4338ca;
+    --accent-color: #6366f1;
 }
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-body, html {
-    width: 100%;
-    height: 100%;
+body {
     background-color: var(--bg-main);
     color: var(--text-main);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    height: 100vh;
     overflow: hidden;
 }
 
@@ -32,39 +29,40 @@ body, html {
 
 /* Sidebar */
 .sidebar {
-    width: 260px;
+    width: 280px;
     background-color: var(--bg-sidebar);
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     transition: transform 0.3s ease;
-    z-index: 10;
 }
 
 .sidebar.hidden {
-    transform: translateX(-100%);
+    transform: translateX(-280px);
     position: absolute;
     height: 100%;
+    z-index: 100;
 }
 
 .sidebar-header {
     padding: 1rem;
 }
 
-.new-chat-btn {
+#new-chat-btn {
     width: 100%;
-    background-color: var(--accent-color);
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
     color: white;
     border: none;
     border-radius: 8px;
-    padding: 0.75rem;
-    font-weight: 500;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+    transition: opacity 0.2s;
 }
 
-.new-chat-btn:hover {
-    background-color: var(--accent-hover);
+#new-chat-btn:hover {
+    opacity: 0.9;
 }
 
 .rooms-list {
@@ -76,27 +74,48 @@ body, html {
     gap: 4px;
 }
 
-.room-item {
-    padding: 0.6rem 0.8rem;
+.room-item-wrapper {
+    display: flex;
+    align-items: center;
     border-radius: 6px;
-    cursor: pointer;
-    color: var(--text-muted);
+    transition: background 0.2s;
+}
+
+.room-item-wrapper:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.room-item-wrapper.active {
+    background-color: rgba(99, 102, 241, 0.15);
+}
+
+.room-item {
+    flex: 1;
+    padding: 0.6rem 0.8rem;
     font-size: 0.9rem;
-    transition: background 0.2s, color 0.2s;
+    color: var(--text-main);
+    cursor: pointer;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.room-item:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: var(--text-main);
+.delete-room-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.4rem 0.6rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-size: 0.85rem;
 }
 
-.room-item.active {
-    background-color: rgba(79, 70, 229, 0.15);
-    color: var(--accent-color);
-    font-weight: 500;
+.room-item-wrapper:hover .delete-room-btn {
+    opacity: 0.8;
+}
+
+.delete-room-btn:hover {
+    opacity: 1 !important;
 }
 
 .sidebar-footer {
@@ -104,21 +123,19 @@ body, html {
     border-top: 1px solid var(--border-color);
 }
 
-.user-profile {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-size: 0.8rem;
-    color: var(--text-muted);
+#logout-btn {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 6px;
+    padding: 0.6rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
 }
 
-.user-profile input {
-    background: var(--bg-chatbox);
-    border: 1px solid var(--border-color);
-    color: var(--text-main);
-    padding: 0.5rem;
-    border-radius: 6px;
-    font-size: 0.9rem;
+#logout-btn:hover {
+    background-color: rgba(239, 68, 68, 0.2);
 }
 
 /* Chat Main */
@@ -126,58 +143,79 @@ body, html {
     flex: 1;
     display: flex;
     flex-direction: column;
-    height: 100%;
-    position: relative;
-}
-
-.chat-header {
-    height: 60px;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    align-items: center;
-    padding: 0 1.5rem;
-    gap: 1rem;
+    height: 100vh;
     background-color: var(--bg-main);
 }
 
-.toggle-sidebar-btn {
-    background: none;
-    border: none;
-    color: var(--text-main);
-    font-size: 1.2rem;
-    cursor: pointer;
-}
-
-.chat-header h2 {
-    font-size: 1.1rem;
-    font-weight: 500;
-    flex: 1;
-}
-
-.room-actions {
+.chat-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
     display: flex;
-    gap: 8px;
+    align-items: center;
+    justify-content: space-between;
 }
 
-.room-actions input {
-    background: var(--bg-chatbox);
+.chat-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Nowy, minimalistyczny przycisk zwijania menu ze strzałką */
+#toggle-sidebar-btn {
+    background: transparent;
     border: 1px solid var(--border-color);
     color: var(--text-main);
-    padding: 0.4rem 0.8rem;
     border-radius: 6px;
-    font-size: 0.85rem;
-}
-
-.room-actions button {
-    background: var(--border-color);
-    color: var(--text-main);
-    border: none;
-    padding: 0.4rem 0.8rem;
-    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    font-size: 0.85rem;
+    transition: background 0.2s, border-color 0.2s;
 }
 
+#toggle-sidebar-btn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--accent-color);
+}
+
+/* Styl edycji nazwy pokoju w miejscu (inline editing) */
+.room-title-container {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.room-title-container:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.room-title-container h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.hidden-rename-input {
+    background: var(--bg-sidebar);
+    border: 1px solid var(--accent-color);
+    color: var(--text-main);
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    outline: none;
+    width: 250px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Wiadomości */
 .chat-messages {
     flex: 1;
     overflow-y: auto;
@@ -185,16 +223,13 @@ body, html {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    max-width: 800px;
-    width: 100%;
-    margin: 0 auto;
 }
 
 .message {
+    max-width: 75%;
     display: flex;
     flex-direction: column;
     gap: 4px;
-    max-width: 75%;
 }
 
 .message.user {
@@ -208,162 +243,22 @@ body, html {
 .message-author {
     font-size: 0.75rem;
     color: var(--text-muted);
-    font-weight: 500;
+    padding: 0 4px;
 }
 
 .message-content {
-    background-color: var(--bg-chatbox);
-    padding: 0.9rem 1.2rem;
-    border-radius: 12px;
-    font-size: 0.95rem;
-    line-height: 1.5;
+    background-color: #111827;
     border: 1px solid var(--border-color);
+    padding: 0.9rem 1.1rem;
+    border-radius: 12px;
+    font-size: 0.95kr;
+    line-height: 1.5;
+    word-break: break-word;
 }
 
 .message.user .message-content {
-    background-color: #111827;
-    border-color: #1f2937;
-}
-
-/* Input Area */
-.chat-input-container {
-    padding: 1.5rem;
-    background: linear-gradient(transparent, var(--bg-main) 40%);
-    display: flex;
-    justify-content: center;
-}
-
-.chat-input-wrapper {
-    max-width: 800px;
-    width: 100%;
-    background: var(--bg-chatbox);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    display: flex;
-    align-items: flex-end;
-    padding: 0.75rem 1rem;
-    gap: 10px;
-}
-
-.chat-input-wrapper textarea {
-    flex: 1;
-    background: none;
-    border: none;
-    color: var(--text-main);
-    font-size: 0.95rem;
-    resize: none; /* Usuwa ten szpecący suwak/uchwyt */
-    overflow-y: hidden; /* Ukrywa standardowy scrollbar w trakcie pisania */
-    min-height: 24px;
-    max-height: 150px; /* Maksymalna wysokość, po której pojawi się ładny przewijak */
-    outline: none;
-    font-family: inherit;
-    line-height: 1.4;
-}
-
-.chat-input-wrapper button {
-    background: var(--accent-color);
-    color: white;
-    border: none;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s;
-}
-
-.chat-input-wrapper button:hover {
-    background: var(--accent-hover);
-}
-
-/* Styl elementu pokoju w sidebarze zawierającego przycisk usuwania */
-.room-item-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-radius: 6px;
-    transition: background 0.2s;
-}
-
-.room-item-wrapper:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-.room-item-wrapper.active {
-    background-color: rgba(79, 70, 229, 0.15);
-}
-
-.room-item {
-    flex: 1;
-    padding: 0.6rem 0.8rem;
-    cursor: pointer;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.room-item-wrapper.active .room-item {
-    color: var(--accent-color);
-    font-weight: 500;
-}
-
-.delete-room-btn {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    padding: 0.4rem 0.6rem;
-    font-size: 0.85rem;
-    border-radius: 4px;
-    opacity: 0;
-    transition: opacity 0.2s, color 0.2s;
-}
-
-.room-item-wrapper:hover .delete-room-btn {
-    opacity: 1;
-}
-
-.delete-room-btn:hover {
-    color: #ef4444; /* Czerwony akcent przy najechaniu */
-}
-
-.chat-input-container {
-    padding: 1.5rem;
-    background: linear-gradient(transparent, var(--bg-main) 40%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-}
-
-.file-preview-container {
-    background: var(--bg-chatbox);
-    border: 1px solid var(--border-color);
-    padding: 0.4rem 0.8rem;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    color: var(--text-main);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    max-width: 800px;
-    width: 100%;
-}
-
-.file-preview-container button {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 0.9rem;
-}
-
-.file-preview-container button:hover {
-    color: #ef4444;
+    background-color: #1e1b4b;
+    border-color: #3730a3;
 }
 
 .message-image {
@@ -371,48 +266,86 @@ body, html {
     max-height: 300px;
     border-radius: 8px;
     margin-top: 8px;
-    object-fit: contain;
+    display: block;
 }
 
-/* --- Niestandardowy Scrollbar dla całej aplikacji --- */
-
-/* 1. Szerokość i tło całego paska */
-::-webkit-scrollbar {
-    width: 8px;           /* Szerokość pionowego paska */
-    height: 8px;          /* Wysokość poziomego paska */
-    background-color: transparent;
+/* Input do pisania */
+.chat-input-container {
+    padding: 1.5rem 2rem;
+    background-color: var(--bg-main);
+    border-top: 1px solid var(--border-color);
 }
 
-/* 2. "Trak" - tor, po którym suwak się porusza */
-::-webkit-scrollbar-track {
-    background: var(--bg-main); /* Kolor toru (zmienna z :root) */
-    border-radius: 4px;
+.file-preview-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #111827;
+    border: 1px solid var(--border-color);
+    padding: 6px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    width: fit-content;
 }
 
-/* 3. "Thumb" - sam suwak (to co łapiemy myszką) */
-::-webkit-scrollbar-thumb {
-    background: #374151;     /* Ciemny szary, pasujący do border-color */
-    border-radius: 4px;      /* Zaokrąglone rogi */
-    border: 1px solid var(--bg-main); /* Subtelna ramka */
+#remove-file-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
 }
 
-/* 4. Efekt po najechaniu myszką na suwak */
-::-webkit-scrollbar-thumb:hover {
-    background: #4b5563;     /* Jaśniejszy szary po najechaniu */
+.chat-input-wrapper {
+    display: flex;
+    align-items: flex-end;
+    background-color: #111827;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 8px 12px;
+    gap: 10px;
 }
 
-/* --- Opcjonalnie: Specyficzne dostosowanie dla chatu i sidebaru --- */
-/* Wymuszamy, aby scrollbary zawsze używały powyższego stylu,
-   nawet jeśli przeglądarka ma inne ustawienia systemowe */
-
-.chat-messages {
-    scrollbar-width: thin;
-    scrollbar-color: #374151 var(--bg-main);
+.chat-input-wrapper:focus-within {
+    border-color: var(--accent-color);
 }
 
-.rooms-list {
-    scrollbar-width: thin;
-    scrollbar-color: #374151 var(--bg-sidebar);
+#message-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    font-size: 0.95rem;
+    resize: none;
+    max-height: 150px;
+    outline: none;
+    padding: 6px 0;
+}
+
+#attach-btn, #send-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    padding: 6px;
+    transition: color 0.2s;
+}
+
+#attach-btn:hover {
+    color: var(--text-main);
+}
+
+#send-btn {
+    background-color: var(--accent-color);
+    color: white;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
 }
 
 /* Ekran logowania */
@@ -491,85 +424,24 @@ body, html {
     color: var(--text-main);
 }
 
-.auth-buttons button:hover {
-    opacity: 0.9;
-}
-
 .auth-error {
     color: #ef4444;
     font-size: 0.85rem;
     margin-top: 5px;
 }
 
-.hidden {
-    display: none !important;
+/* Scrollbary */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
 }
-
-/* --- Profesjonalny, spójny design elementów interfejsu --- */
-
-/* 1. Przycisk "+ Nowa rozmowa" */
-#new-chat-btn {
-    background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: 8px !important;
-    padding: 0.75rem 1rem !important;
-    font-weight: 600 !important;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3) !important;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    width: 100%;
+::-webkit-scrollbar-track {
+    background: transparent;
 }
-#new-chat-btn:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
+::-webkit-scrollbar-thumb {
+    background: #1f293d;
+    border-radius: 3px;
 }
-
-/* 2. Górny input zmiany nazwy pokoju */
-.chat-header-right input[type="text"],
-#rename-input {
-    background-color: #1e1b4b !important;
-    color: #ffffff !important;
-    border: 1px solid #4338ca !important;
-    border-radius: 6px !important;
-    padding: 0.5rem 0.75rem !important;
-    outline: none !important;
-}
-.chat-header-right input[type="text"]:focus,
-#rename-input:focus {
-    border-color: #6366f1 !important;
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
-}
-
-/* 3. Przycisk "Zapisz" obok nazwy */
-.chat-header-right button,
-#rename-btn {
-    background-color: #374151 !important;
-    color: #ffffff !important;
-    border: 1px solid #4b5563 !important;
-    border-radius: 6px !important;
-    padding: 0.5rem 1rem !important;
-    font-weight: 500 !important;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-.chat-header-right button:hover,
-#rename-btn:hover {
-    background-color: #4b5563 !important;
-}
-
-/* 4. Przycisk "Wyloguj się" na dole sidebara */
-#logout-btn {
-    background-color: rgba(239, 68, 68, 0.15) !important;
-    color: #f87171 !important;
-    border: 1px solid rgba(239, 68, 68, 0.3) !important;
-    border-radius: 6px !important;
-    padding: 0.6rem !important;
-    font-weight: 600 !important;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-#logout-btn:hover {
-    background-color: rgba(239, 68, 68, 0.25) !important;
-    color: #fca5a5 !important;
+::-webkit-scrollbar-thumb:hover {
+    background: #374151;
 }

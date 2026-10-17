@@ -5,12 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MultiGem - Czat Zespołowy</title>
     <link rel="stylesheet" href="/static/style.css">
-    <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-    <!-- Panel Logowania (widoczny domyślnie, dopóki brak sesji) -->
+    <!-- Panel Logowania -->
     <div id="auth-overlay" class="auth-overlay">
         <div class="auth-card">
             <h2>🔐 Logowanie do MultiGem</h2>
@@ -25,16 +24,14 @@
         </div>
     </div>
 
-    <!-- Główna aplikacja czatu (ukryta przed logowaniem) -->
+    <!-- Główna aplikacja -->
     <div id="app-container" class="app-container hidden">
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <button id="new-chat-btn">+ Nowa rozmowa</button>
             </div>
-            <div class="rooms-list" id="rooms-list">
-                <!-- Pokoje generowane dynamicznie -->
-            </div>
+            <div class="rooms-list" id="rooms-list"></div>
             <div class="sidebar-footer">
                 <span id="user-email-display" style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px; overflow: hidden; text-overflow: ellipsis;"></span>
                 <button id="logout-btn" class="secondary-btn" style="width: 100%; padding: 0.4rem; font-size: 0.85rem;">Wyloguj się</button>
@@ -45,18 +42,18 @@
         <div class="chat-main">
             <div class="chat-header">
                 <div class="chat-header-left">
-                    <button id="toggle-sidebar-btn">☰</button>
-                    <h3 id="current-room-title">Główny czat</h3>
-                </div>
-                <div class="chat-header-right">
-                    <input type="text" id="rename-input" placeholder="Nazwa pokoju...">
-                    <button id="rename-btn">Zapisz</button>
+                    <button id="toggle-sidebar-btn" title="Zwiń/Rozwiń panel">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <!-- Tytuł z możliwością edycji po kliknięciu -->
+                    <div id="current-room-container" class="room-title-container" title="Kliknij, aby zmienić nazwę">
+                        <h3 id="current-room-title">Główny czat</h3>
+                        <input type="text" id="rename-input" class="hidden-rename-input hidden" />
+                    </div>
                 </div>
             </div>
 
-            <div class="chat-messages" id="chat-messages">
-                <!-- Wiadomości -->
-            </div>
+            <div class="chat-messages" id="chat-messages"></div>
 
             <div class="chat-input-container">
                 <div class="file-preview-container" id="file-preview" style="display: none;">

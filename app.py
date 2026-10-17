@@ -90,9 +90,7 @@ if prompt := st.chat_input("Napisz coś do Gemini..."):
     with st.spinner("Gemini pisze..."):
       try:
         # Tworzymy czat z uwzględnieniem dotychczasowej historii
-        chat = client.chats.create(
-            model="gemini-2.5-flash", history=api_history[:-1]
-        )
+        chat = client.chats.create(model="gemini-1.5-flash", history=api_history[:-1])
         # Wysyłamy ostatnią wiadomość
         response = chat.send_message(api_history[-1].parts[0].text)
         bot_response = response.text

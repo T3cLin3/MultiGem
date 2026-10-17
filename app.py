@@ -6,33 +6,32 @@ from supabase import create_client
 
 # 1. Konfiguracja strony
 st.set_page_config(
-    page_title="MultiGem", page_icon="✨", layout="wide"
+    page_title="MultiGem", page_icon="", layout="wide"
 )
 
-# 2. Zaawansowane style CSS nadające profesjonalny wygląd
+# 2. Profesjonalne style CSS (bez zbędnych ozdobników i emoji)
 st.markdown(
     """
     <style>
-        /* Globalne tło i czcionka */
         .stApp {
             background-color: #0b0f19;
             color: #f3f4f6;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
-        /* Ukrycie elementów systemowych Streamlit */
-        header, #MainMenu, footer { visibility: hidden; }
+        /* Ukrywamy tylko niepotrzebne elementy, zostawiając kontrolki Streamlita (w tym przycisk rozwijania paska) */
+        header { visibility: hidden; }
+        #MainMenu, footer { visibility: hidden; }
 
-        /* Panel boczny (Sidebar) */
+        /* Panel boczny */
         [data-testid="stSidebar"] {
             background-color: #030712;
             border-right: 1px solid #1f2937;
             padding: 1.5rem 1rem;
         }
 
-        /* Nagłówki w sidebarze */
         [data-testid="stSidebar"] h3 {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: #9ca3af;
@@ -45,7 +44,7 @@ st.markdown(
             background-color: #1f2937;
             color: #f3f4f6;
             border: 1px solid #374151;
-            border-radius: 8px;
+            border-radius: 6px;
             font-weight: 500;
             transition: all 0.2s ease;
         }
@@ -55,8 +54,8 @@ st.markdown(
             color: #ffffff;
         }
 
-        /* Przycisk główny (Nowa rozmowa) */
-        div.stButton > button[kind="primary"], [data-testid="stSidebar"] .stButton:first-of-type > button {
+        /* Przycisk aktywny */
+        div.stButton > button[kind="primary"] {
             background-color: #4f46e5;
             border-color: #4f46e5;
             color: white;
@@ -70,34 +69,31 @@ st.markdown(
             background-color: #1f2937 !important;
             border: 1px solid #374151 !important;
             color: #f3f4f6 !important;
-            border-radius: 8px !important;
+            border-radius: 6px !important;
         }
         .stTextInput input:focus {
             border-color: #4f46e5 !important;
             box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2) !important;
         }
 
-        /* Styl dymków czatu */
+        /* Dymki czatu */
         [data-testid="stChatMessage"] {
             padding: 1rem 1.2rem;
-            border-radius: 12px;
+            border-radius: 8px;
             margin-bottom: 0.75rem;
             border: 1px solid transparent;
         }
         
-        /* Dymek użytkownika */
         [data-testid="stChatMessage"][data-testid*="user"] {
             background-color: #111827;
             border-color: #1f2937;
         }
 
-        /* Dymek asystenta (Gemini) */
         [data-testid="stChatMessage"][data-testid*="assistant"] {
             background-color: #1f2937;
             border-color: #374151;
         }
 
-        /* Wyczyszczenie marginesów kontenera głównego */
         .block-container {
             max-width: 800px;
             padding-top: 2rem;
@@ -143,31 +139,30 @@ except Exception:
 if st.session_state.current_room not in existing_rooms:
   existing_rooms.append(st.session_state.current_room)
 
-# 4. Elegancki Panel Boczny
+# 4. Panel Boczny
 with st.sidebar:
-  st.markdown("### Profil")
-  user_name = st.text_input("Imię użytkownika", value="Użytkownik", label_visibility="collapsed")
+  st.markdown("### Użytkownik")
+  user_name = st.text_input("Imię", value="Użytkownik", label_visibility="collapsed")
 
-  if st.button("✨ Nowa rozmowa", use_container_width=True):
+  if st.button("Nowa rozmowa", use_container_width=True):
     new_room_name = f"Rozmowa {len(existing_rooms) + 1}"
     st.session_state.current_room = new_room_name
     st.rerun()
 
-  st.markdown("### Wątki rozmów")
+  st.markdown("### Wątki")
   
-  # Zamiast brzydkiego radia robimy zgrabne przyciski dla każdego pokoju
   for room in existing_rooms:
     is_active = room == st.session_state.current_room
     button_type = "primary" if is_active else "secondary"
-    if st.button(f"💬 {room}", key=f"room_btn_{room}", use_container_width=True, type=button_type):
+    if st.button(room, key=f"room_btn_{room}", use_container_width=True, type=button_type):
       if not is_active:
         st.session_state.current_room = room
         st.rerun()
 
   st.markdown("---")
   st.markdown("### Ustawienia wątku")
-  new_name_input = st.text_input("Zmień nazwę:", value=st.session_state.current_room, label_visibility="collapsed")
-  if st.button("Zapisz zmianę", use_container_width=True):
+  new_name_input = st.text_input("Zmień nazwę", value=st.session_state.current_room, label_visibility="collapsed")
+  if st.button("Zapisz", use_container_width=True):
     if new_name_input and new_name_input != st.session_state.current_room:
       old_room = st.session_state.current_room
       try:
@@ -177,7 +172,7 @@ with st.sidebar:
       except Exception as e:
         st.error(f"Błąd: {e}")
 
-  if st.button("🔄 Odśwież dane", use_container_width=True):
+  if st.button("Odśwież", use_container_width=True):
     st.rerun()
 
 room_name = st.session_state.current_room
@@ -196,8 +191,8 @@ except Exception as e:
   st.error(f"Błąd pobierania: {e}")
   messages = []
 
-# 6. Główny interfejs czatu (Czysty, profesjonalny widok)
-st.markdown(f"## ✦ {room_name}")
+# 6. Główny interfejs czatu
+st.markdown(f"## {room_name}")
 st.markdown("<div style='margin-bottom: 2rem;'></div>", unsafe_allow_html=True)
 
 for msg in messages:
@@ -209,15 +204,14 @@ for msg in messages:
   content = msg.get("content", "")
 
   if role == "model":
-    with st.chat_message("assistant", avatar="✨"):
+    with st.chat_message("assistant", avatar=None):
       st.markdown(content)
   else:
-    # Używamy imienia użytkownika jako czystego nagłówka nad treścią bez sztucznych ozdobników
-    with st.chat_message("user", avatar="👤"):
+    with st.chat_message("user", avatar=None):
       st.markdown(f"**{author}**\n\n{content}")
 
 # 7. Obsługa wiadomości
-if prompt := st.chat_input("Wpisz wiadomość..."):
+if prompt := st.chat_input("Napisz wiadomość..."):
   try:
     supabase.table("messages").insert({
         "author": user_name,
@@ -254,14 +248,14 @@ if prompt := st.chat_input("Wpisz wiadomość..."):
     if not contents:
       contents = [prompt]
 
-    with st.chat_message("assistant", avatar="✨"):
-      with st.spinner("Gemini generuje odpowiedź..."):
+    with st.chat_message("assistant", avatar=None):
+      with st.spinner("Generowanie odpowiedzi..."):
         try:
-          ai_response = client.models.generate_content(
+          ai_progress_response = client.models.generate_content(
               model="gemini-3.8-flash",
               contents=contents,
           )
-          bot_response = ai_response.text
+          bot_response = ai_progress_response.text
           st.markdown(bot_response)
 
           supabase.table("messages").insert({
@@ -274,9 +268,9 @@ if prompt := st.chat_input("Wpisz wiadomość..."):
         except Exception as api_err:
           error_msg = str(api_err)
           if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
-            bot_response = "⚠️ [Limit API]: Wyczerpano darmowy limit zapytań do Gemini. Spróbuj za chwilę."
+            bot_response = "Wyczerpano darmowy limit zapytań do Gemini. Spróbuj za chwilę."
           else:
-            bot_response = f"⚠️ [Błąd API]: {error_msg}"
+            bot_response = f"Błąd API: {error_msg}"
 
           st.error(bot_response)
           supabase.table("messages").insert({

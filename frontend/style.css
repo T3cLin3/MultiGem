@@ -251,8 +251,10 @@ body, html {
     border: none;
     color: var(--text-main);
     font-size: 0.95rem;
-    resize: none;
-    max-height: 150px;
+    resize: none; /* Usuwa ten szpecący suwak/uchwyt */
+    overflow-y: hidden; /* Ukrywa standardowy scrollbar w trakcie pisania */
+    min-height: 24px;
+    max-height: 150px; /* Maksymalna wysokość, po której pojawi się ładny przewijak */
     outline: none;
     font-family: inherit;
     line-height: 1.4;
@@ -274,4 +276,141 @@ body, html {
 
 .chat-input-wrapper button:hover {
     background: var(--accent-hover);
+}
+
+/* Styl elementu pokoju w sidebarze zawierającego przycisk usuwania */
+.room-item-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.room-item-wrapper:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.room-item-wrapper.active {
+    background-color: rgba(79, 70, 229, 0.15);
+}
+
+.room-item {
+    flex: 1;
+    padding: 0.6rem 0.8rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.room-item-wrapper.active .room-item {
+    color: var(--accent-color);
+    font-weight: 500;
+}
+
+.delete-room-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.2s, color 0.2s;
+}
+
+.room-item-wrapper:hover .delete-room-btn {
+    opacity: 1;
+}
+
+.delete-room-btn:hover {
+    color: #ef4444; /* Czerwony akcent przy najechaniu */
+}
+
+.chat-input-container {
+    padding: 1.5rem;
+    background: linear-gradient(transparent, var(--bg-main) 40%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.file-preview-container {
+    background: var(--bg-chatbox);
+    border: 1px solid var(--border-color);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 800px;
+    width: 100%;
+}
+
+.file-preview-container button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.file-preview-container button:hover {
+    color: #ef4444;
+}
+
+.message-image {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    margin-top: 8px;
+    object-fit: contain;
+}
+
+/* --- Niestandardowy Scrollbar dla całej aplikacji --- */
+
+/* 1. Szerokość i tło całego paska */
+::-webkit-scrollbar {
+    width: 8px;           /* Szerokość pionowego paska */
+    height: 8px;          /* Wysokość poziomego paska */
+    background-color: transparent;
+}
+
+/* 2. "Trak" - tor, po którym suwak się porusza */
+::-webkit-scrollbar-track {
+    background: var(--bg-main); /* Kolor toru (zmienna z :root) */
+    border-radius: 4px;
+}
+
+/* 3. "Thumb" - sam suwak (to co łapiemy myszką) */
+::-webkit-scrollbar-thumb {
+    background: #374151;     /* Ciemny szary, pasujący do border-color */
+    border-radius: 4px;      /* Zaokrąglone rogi */
+    border: 1px solid var(--bg-main); /* Subtelna ramka */
+}
+
+/* 4. Efekt po najechaniu myszką na suwak */
+::-webkit-scrollbar-thumb:hover {
+    background: #4b5563;     /* Jaśniejszy szary po najechaniu */
+}
+
+/* --- Opcjonalnie: Specyficzne dostosowanie dla chatu i sidebaru --- */
+/* Wymuszamy, aby scrollbary zawsze używały powyższego stylu,
+   nawet jeśli przeglądarka ma inne ustawienia systemowe */
+
+.chat-messages {
+    scrollbar-width: thin;
+    scrollbar-color: #374151 var(--bg-main);
+}
+
+.rooms-list {
+    scrollbar-width: thin;
+    scrollbar-color: #374151 var(--bg-sidebar);
 }

@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MultiGem - Profesjonalny Czat AI</title>
-    <link rel="stylesheet" href="style.css">
+    <!-- ZMIANA TUTAJ: dodaliśmy /static/ -->
+    <link rel="stylesheet" href="/static/style.css">
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -16,9 +17,7 @@
                 <button class="new-chat-btn" id="new-chat-btn">＋ Nowa rozmowa</button>
             </div>
             
-            <div class="rooms-list" id="rooms-list">
-                <!-- Tutaj JavaScript dynamicznie wrzuci listę wątków -->
-            </div>
+            <div class="rooms-list" id="rooms-list"></div>
 
             <div class="sidebar-footer">
                 <div class="user-profile">
@@ -39,19 +38,28 @@
                 </div>
             </header>
 
-            <div class="chat-messages" id="chat-messages">
-                <!-- Tutaj będą pojawiać się wiadomości -->
-            </div>
+            <div class="chat-messages" id="chat-messages"></div>
 
             <div class="chat-input-container">
+                <!-- Podgląd załączonego pliku -->
+                <div class="file-preview-container" id="file-preview" style="display: none;">
+                    <span id="file-name"></span>
+                    <button id="remove-file-btn">✕</button>
+                </div>
+                
                 <div class="chat-input-wrapper">
-                    <textarea id="message-input" rows="1" placeholder="Napisz wiadomość..."></textarea>
+                    <!-- Przycisk dodawania pliku (ukryty input typu file) -->
+                    <input type="file" id="file-input" style="display: none;" accept="image/*,application/pdf,text/plain">
+                    <button id="attach-btn" title="Dodaj plik lub zdjęcie">📎</button>
+                    
+                    <textarea id="message-input" rows="1" placeholder="Napisz wiadomość lub dodaj plik..."></textarea>
                     <button id="send-btn">➔</button>
                 </div>
             </div>
         </main>
     </div>
 
-    <script src="script.js"></script>
+    <!-- ZMIANA TUTAJ: dodaliśmy /static/ do skryptu -->
+    <script src="/static/script.js"></script>
 </body>
 </html>

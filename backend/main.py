@@ -4,6 +4,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from google import genai
+from google.genai import types
+import base64
 
 app = FastAPI()
 
@@ -25,19 +27,29 @@ async def chat_with_gemini(req: ChatRequest):
             author = m.get("author", "Użytkownik")
             text = m.get("content", "")
             role = m.get("role", "user")
+            file_data = m.get("file_data")  # Opcjonalny załącznik (Base64)
+            file_mime = m.get("file_mime")  # Typ MIME pliku (np. image/png)
+
+            # Jeśli wiadomość zawierała plik/obrazek, przekazujemy go do Gemini przez types.Part
+            parts = []
+            if file_data and file_mime:
+                binary_data = base64.b64decode(file_data)
+                parts.append(types.Part.from_bytes(data=binary_data, mime_type=file_mime))
             
-            if role == "model":
-                contents.append(f"Gemini: {text}")
-            else:
-                contents.append(f"{author}: {text}")
+            if text:
+                prefix = "Gemini: " if role == "model" else f"{author}: "
+                parts.append(prefix + text)
+
+            contents.append(parts if len(parts) > 1 else (parts[0] if parts else ""))
 
         if not contents:
             raise HTTPException(status_code=400, detail="Brak wiadomości do przetworzenia.")
 
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.8-flash",
             contents=contents,
         )
+        
         return {"response": response.text}
 
     except Exception as e:

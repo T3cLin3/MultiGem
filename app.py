@@ -144,3 +144,4 @@ if prompt := st.chat_input("Napisz coś do Gemini..."):
 
   except Exception as e:
     st.error(f"Wystąpił błąd ogólny: {e}")
+#cos

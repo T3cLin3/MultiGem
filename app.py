@@ -94,26 +94,26 @@ if prompt := st.chat_input("Napisz coś do Gemini..."):
         .order("created_at", desc=False)
         .execute()
     )
-    all_msgs = fresh_res.data
+    all_msgs = fresh_res.data or []
 
+    # Tworzymy czystą listę wiadomości w formacie tekstowym akceptowanym przez API
     contents = []
     for m in all_msgs:
-      # Ignorujemy elementy, które nie są słownikami
       if not isinstance(m, dict):
         continue
+      author = m.get("author", "Użytkownik")
+      text = m.get("content", "")
+      role = m.get("role", "user")
 
-      r = "user" if m.get("role") == "user" else "model"
-      prefix = (
-          f"[{m.get('author', 'Użytkownik')}]: "
-          if m.get("role") == "user"
-          else ""
-      )
-      contents.append(
-          types.Content(
-              role=r,
-              parts=[types.Part.from_text(text=prefix + str(m.get("content", "")))],
-          )
-      )
+      # Formatujemy treść, aby model wiedział, kto co napisał
+      if role == "model":
+        contents.append(f"Gemini: {text}")
+      else:
+        contents.append(f"{author}: {text}")
+
+    # Jeśli z jakiegoś powodu lista jest pusta, wrzucamy awaryjny prompt
+    if not contents:
+      contents = [prompt]
 
     # 8. Wywołanie modelu Gemini
     with st.chat_message("assistant", avatar="🤖"):
@@ -132,29 +132,6 @@ if prompt := st.chat_input("Napisz coś do Gemini..."):
             "role": "model",
         }).execute()
 
-    st.rerun()
-
-  except Exception as e:
-    st.error(f"Wystąpił błąd podczas komunikacji z API Gemini: {e}")
-
-    # 8. Wywołanie modelu Gemini
-    with st.chat_message("assistant", avatar="🤖"):
-      with st.spinner("Gemini pisze..."):
-        ai_response = client.models.generate_content(
-            model="gemini-3.8-flash",
-            contents=contents,
-        )
-        bot_response = ai_response.text
-        st.markdown(bot_response)
-
-        # Zapisujemy odpowiedź AI w bazie Supabase, aby znajomy też ją zobaczył!
-        supabase.table("messages").insert({
-            "author": "Gemini",
-            "content": bot_response,
-            "role": "model",
-        }).execute()
-
-    # Odświeżamy stronę, żeby wszystko ładnie się zsynchronizowało
     st.rerun()
 
   except Exception as e:

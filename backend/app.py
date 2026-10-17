@@ -47,6 +47,7 @@ async def chat_with_gemini(req: ChatRequest):
         raise HTTPException(status_code=500, detail=error_str)
 
 # Serwowanie frontendu jako plików statycznych pod /static oraz strona główna
+# Zmień tę linijkę w main.py:
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
 @app.get("/")

@@ -1,18 +1,17 @@
-# Używamy oficjalnego, lekkiego obrazu Pythona
 FROM python:3.11-slim
 
-# Ustawiamy katalog roboczy w kontenerze
 WORKDIR /app
 
-# Kopiujemy wymagania i instalujemy biblioteki
+# Kopiujemy wymagania i instalujemy
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Kopiujemy całą zawartość projektu (backend i frontend) do kontenera
-COPY . .
+# Kopiujemy zawartość folderu backend bezpośrednio do /app
+COPY backend/ .
+# Kopiujemy też frontend, żeby pliki statyczne były na miejscu
+COPY frontend/ ./frontend/
 
-# Otwieramy port, na którym działa FastAPI
 EXPOSE 8000
 
-# Komenda startowa uruchamiająca serwer
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Skoro main.py jest w /app, uruchamiamy po prostu main:app
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

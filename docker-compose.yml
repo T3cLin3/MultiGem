@@ -4,7 +4,7 @@ services:
   multigem-app:
     build: .
     ports:
-      - "8000:8000"
+      - "8080:8000"  # port na Twoim komputerze to 8080, a w kontenerze zostaje 8000
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
     restart: always

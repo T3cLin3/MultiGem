@@ -75,7 +75,7 @@ for msg in messages:
 
 # 6. Obsługa nowej wiadomości
 if prompt := st.chat_input("Napisz coś do Gemini..."):
-  # Zapisujemy wiadomość użytkownika w bazie Supabase
+  # KROK A: Zapisujemy wiadomość użytkownika w bazie NATYCHMIAST
   try:
     supabase.table("messages").insert({
         "author": user_name,
@@ -85,21 +85,16 @@ if prompt := st.chat_input("Napisz coś do Gemini..."):
   except Exception as e:
     st.error(f"Błąd zapisu wiadomości: {e}")
 
-  # Wyświetlamy od razu u siebie
-  with st.chat_message("user"):
-    st.markdown(f"**{user_name}:** {prompt}")
-
-# 7. Przygotowanie pełnej historii do wysłania do Gemini
+  # KROK B: Pobieramy pełną historię dla Gemini
   try:
     fresh_res = (
         supabase.table("messages")
         .select("*")
-        .order("created_at", desc=False)
+        .order("id", desc=False)
         .execute()
     )
     all_msgs = fresh_res.data or []
 
-    # Tworzymy czystą listę wiadomości w formacie tekstowym akceptowanym przez API
     contents = []
     for m in all_msgs:
       if not isinstance(m, dict):
@@ -108,34 +103,44 @@ if prompt := st.chat_input("Napisz coś do Gemini..."):
       text = m.get("content", "")
       role = m.get("role", "user")
 
-      # Formatujemy treść, aby model wiedział, kto co napisał
       if role == "model":
         contents.append(f"Gemini: {text}")
       else:
         contents.append(f"{author}: {text}")
 
-    # Jeśli z jakiegoś powodu lista jest pusta, wrzucamy awaryjny prompt
     if not contents:
       contents = [prompt]
 
-    # 8. Wywołanie modelu Gemini
+    # KROK C: Wywołanie modelu Gemini (z zabezpieczeniem przed błędem limitu)
     with st.chat_message("assistant", avatar="🤖"):
       with st.spinner("Gemini pisze..."):
-        ai_response = client.models.generate_content(
-            model="gemini-3.8-flash",
-            contents=contents,
-        )
-        bot_response = ai_response.text
-        st.markdown(bot_response)
+        try:
+          ai_response = client.models.generate_content(
+              model="gemini-3.8-flash",
+              contents=contents,
+          )
+          bot_response = ai_response.text
+          st.markdown(bot_response)
 
-        # Zapisujemy odpowiedź AI w bazie Supabase
-        supabase.table("messages").insert({
-            "author": "Gemini",
-            "content": bot_response,
-            "role": "model",
-        }).execute()
+          # Zapisujemy odpowiedź bota w bazie
+          supabase.table("messages").insert({
+              "author": "Gemini",
+              "content": bot_response,
+              "role": "model",
+          }).execute()
 
+        except Exception as api_err:
+          error_msg = str(api_err)
+          if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+            st.error(
+                "⚠️ Wyczerpano darmowy limit zapytań do Gemini (Rate Limit)."
+                " Odczekaj minutę i spróbuj ponownie."
+            )
+          else:
+            st.error(f"Błąd API Gemini: {error_msg}")
+
+    # Odświeżamy widok, żeby pokazać zapisane wiadomości
     st.rerun()
 
   except Exception as e:
-    st.error(f"Wystąpił błąd podczas komunikacji z API Gemini: {e}")
+    st.error(f"Wystąpił błąd ogólny: {e}")

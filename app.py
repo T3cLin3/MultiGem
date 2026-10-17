@@ -38,24 +38,27 @@ if "messages" not in st.session_state:
 
 # 5. Wyświetlanie dotychczasowej historii czatu
 for message in st.session_state.messages:
-  role = (
-      "assistant"
-      if message["role"] == "model"
-      else f"user ({message.get('author', 'Ktoś')})"
-  )
-  with st.chat_message(role):
-    st.markdown(message["content"])
+  if message["role"] == "model":
+    with st.chat_message("assistant", avatar="🤖"):
+      st.markdown(message["content"])
+  else:
+    author = message.get("author", "Użytkownik")
+    # Awatar z pierwszą literą imienia (np. "B" dla Bartek)
+    avatar_letter = author[0].upper() if author else "U"
+    with st.chat_message("user", avatar=avatar_letter):
+      st.markdown(f"**{author}:** {message['content']}")
 
-# 6. Obsługa wprowadzania nowej wiadomości
+# 6. Obsługa wprowadzania nowej wiadomości przez użytkownika
 if prompt := st.chat_input("Napisz coś do Gemini..."):
   st.session_state.messages.append(
       {"role": "user", "content": prompt, "author": user_name}
   )
 
-  with st.chat_message(f"user ({user_name})"):
-    st.markdown(prompt)
+  avatar_letter = user_name[0].upper() if user_name else "U"
+  with st.chat_message("user", avatar=avatar_letter):
+    st.markdown(f"**{user_name}:** {prompt}")
 
-  # 7. Przygotowanie historii dla API Gemini
+  # Przygotowanie historii dla API Gemini
   contents = []
   for msg in st.session_state.messages:
     role = "user" if msg["role"] == "user" else "model"
@@ -71,14 +74,14 @@ if prompt := st.chat_input("Napisz coś do Gemini..."):
         )
     )
 
-  # 8. Wywołanie API Gemini z poprawionym identyfikatorem modelu
-  with st.chat_message("assistant"):
+  # 8. Wywołanie API Gemini
+  with st.chat_message("assistant", avatar="🤖"):
     with st.spinner("Gemini pisze..."):
       try:
         response = client.models.generate_content(
-    model="gemini-3.8-flash",
-    contents=contents,
-)
+            model="gemini-3.8-flash",
+            contents=contents,
+        )
 
         bot_response = response.text
         st.markdown(bot_response)

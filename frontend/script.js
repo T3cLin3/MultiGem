@@ -9,7 +9,7 @@ try {
     console.error("Błąd inicjalizacji Supabase:", e);
 }
 
-const BACKEND_URL = 'http://localhost:8080';
+const BACKEND_URL = '';
 
 // Sesja aktualnego pokoju
 let currentRoomId = 'main-chat';

@@ -43,9 +43,7 @@ for message in st.session_state.messages:
       st.markdown(message["content"])
   else:
     author = message.get("author", "Użytkownik")
-    # Awatar z pierwszą literą imienia (np. "B" dla Bartek)
-    avatar_letter = author[0].upper() if author else "U"
-    with st.chat_message("user", avatar=avatar_letter):
+    with st.chat_message("user"):  # Bez argumentu avatar, żeby Streamlit nie szukał pliku
       st.markdown(f"**{author}:** {message['content']}")
 
 # 6. Obsługa wprowadzania nowej wiadomości przez użytkownika
@@ -54,8 +52,7 @@ if prompt := st.chat_input("Napisz coś do Gemini..."):
       {"role": "user", "content": prompt, "author": user_name}
   )
 
-  avatar_letter = user_name[0].upper() if user_name else "U"
-  with st.chat_message("user", avatar=avatar_letter):
+  with st.chat_message("user"):
     st.markdown(f"**{user_name}:** {prompt}")
 
   # Przygotowanie historii dla API Gemini
